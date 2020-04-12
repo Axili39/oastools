@@ -4,6 +4,7 @@ clean:
 	rm -f mdlexplore
 mdlexplore: cmd/mdlexplore.go pkg/oasjstree/oasjstree.go
 	go build cmd/mdlexplore.go
+	GOOS=windows GOARCH=386 go build -o mdlexplore.exe cmd/mdlexplore.go
 bundle: mdlexplore
 	mkdir -p /tmp/mdlbuild
 	cp -r dist /tmp/mdlbuild
