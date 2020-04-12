@@ -1,0 +1,129 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Lux API
+  license:
+    name: MIT
+servers:
+  - url: http://github.com/Axili39/lux
+paths:
+components:
+  schemas:
+    A:
+      type: object
+      properties:
+        p1:
+            $ref: "#/components/schemas/B"
+        p2:
+          type: object
+          properties:
+            p22:
+              type: string
+            p23:
+              type: integer
+        p3:
+          type: array
+          items:
+            $ref: "#/components/schemas/B"
+    B:
+      type: object
+      properties:
+        abc:
+          type: string
+        def:
+          type: object
+          properties:
+            member1:
+              type: string
+    TopologyDef:
+      type: object
+      required:
+        - name
+        - nodes
+      properties:
+        name:
+          type: string
+        options:
+          type: object
+          properties:
+            adminNetworkBridge:
+              type: string
+        nodes:
+            $ref: "#/components/schemas/Node"
+
+        networks:
+            $ref: "#/components/schemas/Network"
+    Node:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+        networks:
+          type: array
+          items:
+            type: object
+            properties:
+              name: 
+                type: string
+              ifname:
+                type: string
+              ip4addr:
+                type: string
+              dhcp:
+                type: boolean
+              mac:
+                type: string
+      example:
+        node1:
+          name: mydevice
+          networks:
+            net1:
+              ifname: eth0
+              ip4addr: 10.0.0.1/24
+              macaddr: 00:12:EE:45:EF:01
+    Network:
+      type: object
+      properties:
+        ipaddr:
+          type: string
+        usedns:
+          type: boolean
+        usedhcp:
+          type: boolean    
+    Topology:
+      allOf:
+      - $ref: '#/components/schemas/TopologyDef'
+      - type: object
+        required:
+        - id
+        properties:
+          id:
+            type: string
+    TopologyStatus:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - INITIALIZING
+          - STOPPED
+          - STARTED
+          - ERROR
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+
