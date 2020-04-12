@@ -116,7 +116,7 @@ func (a *OASArray) UpdateTypeRefs(refs map[string]OASType) {
 
 //GetNode : OASArray OASType interface realization
 func (o *OASObject) GetNode(unfold bool) *JstNode {
-	node := JstNode{"", o.name, iconObject, &JstNodeState{true, false, false}, nil}
+	node := JstNode{"", o.name, iconObject, &JstNodeState{unfold, false, false}, nil}
 	log.Printf("new object node : %s #members:%d\n", o.name, len(o.Members))
 	for m := range o.Members {
 		log.Printf("add Member:%s to object:%s\n", o.Members[m].Name, o.name)
@@ -188,7 +188,17 @@ func GetJstree(file string, object string, unfold bool) *JstNode {
 	// First load the file against OAS Specs
 	oa := oasmodel.OpenAPI{}
 	oa.Load(file)
+	return getJstree(&oa, object, unfold)
+}
 
+//GetJstreeFromData : return jstree root data info
+func GetJstreeFromData(buffer []byte, object string, unfold bool) *JstNode {
+	oa := oasmodel.OpenAPI{}
+	oa.UnMarshal(buffer)
+	return getJstree(&oa, object, unfold)
+}
+
+func getJstree(oa *oasmodel.OpenAPI, object string, unfold bool) *JstNode {
 	// Generate Jst Internal Generator Representation
 	components := make(map[string]OASType)
 	Refs := make(map[string]OASType)

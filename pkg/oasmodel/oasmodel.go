@@ -432,40 +432,40 @@ deprecated		boolean					Specifies that a schema is deprecated and SHOULD be tran
 
 */
 type Schema struct {
-	Type                 string                 `yaml:"type,omitempty"`
-	Title                string                 `yaml:"title,omitempty"`
-	MultipleOf           int                    `yaml:"multipleOf,omitempty"`
-	Maximum              int                    `yaml:"maximum,omitempty"`
-	ExclusiveMaximum     int                    `yaml:"exclusiveMaximum,omitempty"`
-	Minimum              int                    `yaml:"minimum,omitempty"`
-	ExclusiveMinimum     int                    `yaml:"exclusiveMinimum,omitempty"`
-	MaxLength            int                    `yaml:"maxLength,omitempty"`
-	MinLength            int                    `yaml:"minLength,omitempty"`
-	Pattern              string                 `yaml:"pattern,omitempty"`
-	MaxItems             int                    `yaml:"maxItems,omitempty"`
-	MinItems             int                    `yaml:"minItems,omitempty"`
-	UniqueItems          bool                   `yaml:"uniqueItems,omitempty"`
-	MaxProperties        int                    `yaml:"maxProperties,omitempty"`
-	MinProperties        int                    `yaml:"minProperties,omitempty"`
-	Required             []string               `yaml:"required,omitempty"`
-	Enum                 []string               `yaml:"enum,omitempty"`
+	Type                 string                  `yaml:"type,omitempty"`
+	Title                string                  `yaml:"title,omitempty"`
+	MultipleOf           int                     `yaml:"multipleOf,omitempty"`
+	Maximum              int                     `yaml:"maximum,omitempty"`
+	ExclusiveMaximum     int                     `yaml:"exclusiveMaximum,omitempty"`
+	Minimum              int                     `yaml:"minimum,omitempty"`
+	ExclusiveMinimum     int                     `yaml:"exclusiveMinimum,omitempty"`
+	MaxLength            int                     `yaml:"maxLength,omitempty"`
+	MinLength            int                     `yaml:"minLength,omitempty"`
+	Pattern              string                  `yaml:"pattern,omitempty"`
+	MaxItems             int                     `yaml:"maxItems,omitempty"`
+	MinItems             int                     `yaml:"minItems,omitempty"`
+	UniqueItems          bool                    `yaml:"uniqueItems,omitempty"`
+	MaxProperties        int                     `yaml:"maxProperties,omitempty"`
+	MinProperties        int                     `yaml:"minProperties,omitempty"`
+	Required             []string                `yaml:"required,omitempty"`
+	Enum                 []string                `yaml:"enum,omitempty"`
 	AllOf                []*SchemaOrRef          `yaml:"allOf,omitempty"`
 	OneOf                []*SchemaOrRef          `yaml:"oneOf,omitempty"`
 	AnyOf                []*SchemaOrRef          `yaml:"anyOf,omitempty"`
-	Items                *SchemaOrRef           `yaml:"items,omitempty"`
+	Items                *SchemaOrRef            `yaml:"items,omitempty"`
 	Properties           map[string]*SchemaOrRef `yaml:"properties,omitempty"`
-	AdditionalProperties *AdditionalProperties  `yaml:"additionalProperties,omitempty"`
-	Description          string                 `yaml:"description,omitempty"`
-	Format               string                 `yaml:"format,omitempty"`
-	Default              string                 `yaml:"default,omitempty"`
-	Nullable             bool                   `yaml:"nullable,omitempty"`
-	Discriminator        *Discriminator         `yaml:"discriminator,omitempty"`
-	ReadOnly             bool                   `yaml:"readonly,omitempty"`
-	WriteOnly            bool                   `yaml:"writeOnly,omitempty"`
-	XML                  XML                    `yaml:"xml,omitempty"`
-	ExternalDocs         *ExternalDocs          `yaml:"externalDocs,omitempty"`
-	Example              *Example               `yaml:"example,omitempty"`
-	Deprecated           bool                   `yaml:"depreacated,omitempty"`
+	AdditionalProperties *AdditionalProperties   `yaml:"additionalProperties,omitempty"`
+	Description          string                  `yaml:"description,omitempty"`
+	Format               string                  `yaml:"format,omitempty"`
+	Default              string                  `yaml:"default,omitempty"`
+	Nullable             bool                    `yaml:"nullable,omitempty"`
+	Discriminator        *Discriminator          `yaml:"discriminator,omitempty"`
+	ReadOnly             bool                    `yaml:"readonly,omitempty"`
+	WriteOnly            bool                    `yaml:"writeOnly,omitempty"`
+	XML                  XML                     `yaml:"xml,omitempty"`
+	ExternalDocs         *ExternalDocs           `yaml:"externalDocs,omitempty"`
+	Example              *Example                `yaml:"example,omitempty"`
+	Deprecated           bool                    `yaml:"depreacated,omitempty"`
 }
 
 type AdditionalProperties struct {
@@ -711,6 +711,16 @@ func (e *AdditionalProperties) MarshalYAML() (interface{}, error) {
 		return e.BooleanValue, nil
 	}
 	return e.SchemaValue, nil
+}
+
+//UnMarshal : build OpenAPI struct form buffer
+func (c *OpenAPI) UnMarshal(buffer []byte) (*OpenAPI, error) {
+	err := yaml.Unmarshal(buffer, c)
+	if err != nil {
+		log.Fatalf("Unmarshal: %v", err)
+		return nil, err
+	}
+	return c, nil
 }
 
 //Load Charge le fichier de spec d'interface
