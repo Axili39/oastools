@@ -1,6 +1,9 @@
 package main
 
 import(
+	"fmt"
+	"os"
+	"flag"
 	"../../pkg/oatool"
 	"../{{.Package}}"
 )
@@ -19,7 +22,23 @@ func GetObjByName(node string) interface{} {
 	return nil
 }
 
+
+var strUsage = 
+`
+  -f string
+        input file .json/.yaml/.bin
+  -g    generate empty file
+  -o string
+        json|yaml|bin (default "bin")
+  -r string : {{ range $val := .Components }}
+		{{ $val }}{{ end }}
+`
+
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr,"Usage of %s:\n%s\n", os.Args[0], strUsage)
+}
+	
 	oatool.MainOAFileTool(GetObjByName)
 }
 
