@@ -11,6 +11,7 @@
 	</style>
 	<link rel="stylesheet" href="./dist/themes/default/style.min.css" />
 	<link href='./dist/mdlexplorer-style.css' rel='stylesheet' type='text/css'>
+	
 </head>
 <body>
 
@@ -18,7 +19,8 @@
 	<div id="data" class="demo"  style="background-color:white;color:black "></div>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 	<script src="./dist/jstree.min.js"></script>
-	
+	<script src="./dist/html2canvas.min.js"></script>
+	<script src="./dist/reimg.js"></script>
 	<script>
 	// inline data demo
 	$('#data').jstree({
@@ -29,5 +31,21 @@
 		}
 	});
 	</script>
+	
+
+	<script>
+  $(document).ready(function(){
+    $('#Snap').click(function(){
+       	html2canvas(document.querySelector("#data")).then(canvas => {
+			var png = ReImg.fromCanvas(canvas).toPng();
+			document.body.appendChild(png)
+		});
+    });
+  });
+  
+	</script>
+
+	<input type="button" value="ScreenShot" id="Snap" />
+	http://html2canvas.hertzen.com/dist/html2canvas.min.js
 </body>
 </html>

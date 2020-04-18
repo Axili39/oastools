@@ -150,6 +150,10 @@ func (btm *OASBasicTypeMember) GetNode(unfold bool) *JstNode {
 func (btm *OASBasicTypeMember) UpdateTypeRefs(refs map[string]OASType) {
 }
 
+func memberToHTML(m string, desc string) string {
+	return "<table><tr><td width=\"200px\">" + m + "</td><td>: " + desc + "</td></tr></table>"
+}
+
 //SchemaToJst : convert OAS DataModel to Jst Ready model generator
 func SchemaToJst(name string, schema oasmodel.SchemaOrRef) OASType {
 	if schema.Ref != nil {
@@ -165,7 +169,11 @@ func SchemaToJst(name string, schema oasmodel.SchemaOrRef) OASType {
 
 		for m := range schema.Val.Properties {
 			mtype := SchemaToJst(m, *schema.Val.Properties[m])
-			o.Members[m] = objectMember{mtype, m}
+			var desc string
+			if schema.Val.Properties[m].Val != nil {
+				desc = schema.Val.Properties[m].Val.Description
+			}
+			o.Members[m] = objectMember{mtype, memberToHTML(m, desc)}
 		}
 		return &o
 	}
