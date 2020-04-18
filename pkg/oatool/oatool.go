@@ -33,7 +33,9 @@ func y2jConvert(i interface{}) interface{} {
 	}
 	return i
 }
-func Yaml2Json(buf []byte) []byte {
+
+// yaml2Json : credits : stackoverflow ;)
+func yaml2Json(buf []byte) []byte {
 	var body interface{}
 	if err := yaml.Unmarshal(buf, &body); err != nil {
 		panic(err)
@@ -67,7 +69,7 @@ func j2yConvert(i interface{}) interface{} {
 	}
 	return i
 }
-func Json2Yaml(buf []byte) []byte {
+func json2Yaml(buf []byte) []byte {
 	var body interface{}
 	if err := json.Unmarshal(buf, &body); err != nil {
 		panic(err)
@@ -81,20 +83,20 @@ func Json2Yaml(buf []byte) []byte {
 		return b
 	}
 }
-func Data2Object(obj interface{}, data []byte, intype string) error {
+func data2Object(obj interface{}, data []byte, intype string) error {
 	var err error
 	switch intype {
 	case "json":
 		err = json.Unmarshal(data, obj)
 	case "yaml":
-		jsonFile := Yaml2Json(data)
+		jsonFile := yaml2Json(data)
 		err = json.Unmarshal(jsonFile, obj)
 	case "bin":
 		err = proto.Unmarshal(data, obj.(proto.Message))
 	}
 	return err
 }
-func Objet2Data(obj interface{}, outtype string) ([]byte, error) {
+func objet2Data(obj interface{}, outtype string) ([]byte, error) {
 	var out []byte
 	var err error
 	switch outtype {
@@ -103,7 +105,7 @@ func Objet2Data(obj interface{}, outtype string) ([]byte, error) {
 	case "yaml":
 		var jbuf []byte
 		jbuf, err = json.Marshal(obj)
-		out = Json2Yaml(jbuf)
+		out = json2Yaml(jbuf)
 	case "bin":
 		out, err = proto.Marshal(obj.(proto.Message))
 
@@ -111,37 +113,7 @@ func Objet2Data(obj interface{}, outtype string) ([]byte, error) {
 	return out, err
 }
 
-func convert(obj interface{}, data []byte, intype string, outtype string) ([]byte, error) {
-	var err error
-	switch intype {
-	case "json":
-		err = json.Unmarshal(data, obj)
-	case "yaml":
-		jsonFile := Yaml2Json(data)
-		err = json.Unmarshal(jsonFile, obj)
-	case "bin":
-		err = proto.Unmarshal(data, obj.(proto.Message))
-	}
-	if err != nil {
-		log.Fatalf("Unmarshal: %v", err)
-	}
-
-	var out []byte
-	switch outtype {
-	case "json":
-		out, err = json.Marshal(obj)
-	case "yaml":
-		var jbuf []byte
-		jbuf, err = json.Marshal(obj)
-		out = Json2Yaml(jbuf)
-	case "bin":
-		out, err = proto.Marshal(obj.(proto.Message))
-
-	}
-	return out, err
-}
-
-func MainOAFileTool(getObj func(string) interface{}) { //convert func(string, []byte, string, string) ([]byte, error)) {
+func MainOAFileTool(getObj func(string) interface{}) {
 	var file = flag.String("f", "", "input file .json/.yaml/.bin")
 	var format = flag.String("o", "bin", "json|yaml|bin")
 	var root = flag.String("r", "", "")
@@ -165,13 +137,13 @@ func MainOAFileTool(getObj func(string) interface{}) { //convert func(string, []
 			return
 		}
 
-		err = Data2Object(obj, data, intype)
+		err = data2Object(obj, data, intype)
 		if err != nil {
 			log.Printf("error Unmarshalling data %s  #%v ", *file, err)
 			return
 		}
 	}
-	out, err = Objet2Data(obj, *format)
+	out, err = objet2Data(obj, *format)
 
 	if err != nil {
 		log.Fatalf("error Marshalling: %v", err)
