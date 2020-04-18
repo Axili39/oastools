@@ -67,14 +67,17 @@ func (t *TypeName) Declare(w *os.File) {
 func (t *TypeName) Name() string {
 	return t.name
 }
+
 //Repeated
 func (t *TypeName) Repeated() bool {
 	return false
 }
+
 // ARRAY
 type Array struct {
 	typedecl ProtoType
 }
+
 //Declare : ProtoType interface realization
 func (t *Array) Declare(w *os.File) {
 	// does't exist in protobuf
@@ -155,6 +158,7 @@ func (t *Message) Name() string {
 func (t *Message) Repeated() bool {
 	return false
 }
+
 //refIndexElement part of map used to resolve réfences (shall be built-in in OAS package ...)
 type refIndexElement struct {
 	name   string
@@ -201,8 +205,18 @@ func CreateType(name string, schema *oasmodel.SchemaOrRef, refIndex map[string]r
 	}
 
 	if schema.Val.Type == "array" {
-		t := CreateType(name + "Elem", schema.Val.Items, refIndex, Parent)
+		t := CreateType(name+"Elem", schema.Val.Items, refIndex, Parent)
 		node := Array{t}
+		return &node
+	}
+
+	if schema.Val.Type == "boolean" {
+		node := TypeName{"bool", ""}
+		return &node
+	}
+
+	if schema.Val.Type == "integer" {
+		node := TypeName{"int32", ""}
 		return &node
 	}
 	node := TypeName{schema.Val.Type, ""}
@@ -210,7 +224,7 @@ func CreateType(name string, schema *oasmodel.SchemaOrRef, refIndex map[string]r
 }
 
 //Components2Proto : generate proto file from Parsed OpenAPI definition
-func Components2Proto(oa *oasmodel.OpenAPI) {
+func Components2Proto(oa *oasmodel.OpenAPI, f *os.File) {
 	refindex := makeRefindex(oa)
 	var nodeList []ProtoType
 	// create first level Nodes
@@ -219,9 +233,6 @@ func Components2Proto(oa *oasmodel.OpenAPI) {
 		node := CreateType(k, elem, refindex, nil)
 		nodeList = append(nodeList, node)
 	}
-
-	//TODO : f must be a parameter
-	f := os.Stdout
 
 	fmt.Fprintf(f, "syntax = \"proto3\";\n")
 	for n := range nodeList {
@@ -234,5 +245,5 @@ func Test() {
 	oa := oasmodel.OpenAPI{}
 	oa.Load("test.yaml")
 
-	Components2Proto(&oa)
+	Components2Proto(&oa, os.Stdout)
 }

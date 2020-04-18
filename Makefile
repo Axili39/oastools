@@ -1,7 +1,10 @@
-all: mdlexplore oa2proto
+all: mdlexplore oa2proto oatoolgen
 clean:
 	rm -f bundle.zip
 	rm -f mdlexplore
+oatoolgen: cmd/oatoolgen.go pkg/protobuf/protobuf.go pkg/oasmodel/oasmodel.go
+	go build cmd/oatoolgen.go
+
 oa2proto: cmd/oa2proto.go pkg/protobuf/protobuf.go
 	go build cmd/oa2proto.go
 
