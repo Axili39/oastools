@@ -2,7 +2,7 @@ package main
 
 import(
 	"../../pkg/oatool"
-	"../truc"
+	"../{{.Package}}"
 )
 
 {{ $package := .Package }}
