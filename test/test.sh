@@ -10,3 +10,4 @@ cycletest()
 cycletest json
 cycletest bin
 cycletest yaml
+exit 0
