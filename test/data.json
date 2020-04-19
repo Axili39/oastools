@@ -1,1 +1,0 @@
-{"abc":"this is abc member","def":{"member1":"this is def.member1","member2":{"abc":"this is B type, abc member","def":{"member1":"this is B type, def.member1"},"ghi":["a","b","c"]},"member3":[{"name":"1st","valid":true},{"name":"2nd","valid":true},{"name":"3rd"}],"accessPoint":[{"addr":"192.168.1.1","port":8080},{"addr":"192.168.1.19","port":8090}]}}
