@@ -74,7 +74,6 @@ func j2yConvert(i interface{}) interface{} {
 		fmt.Fprintf(os.Stderr, "j2yConvert : Unmatched type %v\n", reflect.TypeOf(i))
 		return i
 	}
-	return i
 }
 
 // Json2Yaml Convert any JSON formatted data-block to YAML data-block

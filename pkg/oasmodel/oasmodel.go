@@ -471,7 +471,7 @@ type Schema struct {
 type AdditionalProperties struct {
 	IsBool       bool
 	BooleanValue bool
-	SchemaValue  Schema
+	Schema       *SchemaOrRef
 }
 
 /*Encoding from OAS
@@ -692,13 +692,13 @@ func (e *AdditionalProperties) UnmarshalYAML(unmarshal func(interface{}) error) 
 	boolValue := false
 	err := unmarshal(&boolValue)
 	if err != nil {
-		schema := Schema{}
+		schema := SchemaOrRef{}
 		err = unmarshal(&schema)
 		if err != nil {
 			fmt.Println("error un marshalling schema")
 			return err
 		}
-		e.SchemaValue = schema
+		e.Schema = &schema
 	}
 	e.BooleanValue = boolValue
 
@@ -710,7 +710,7 @@ func (e *AdditionalProperties) MarshalYAML() (interface{}, error) {
 	if e.IsBool {
 		return e.BooleanValue, nil
 	}
-	return e.SchemaValue, nil
+	return e.Schema, nil
 }
 
 //UnMarshal : build OpenAPI struct form buffer

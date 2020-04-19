@@ -73,6 +73,28 @@ func (t *TypeName) Repeated() bool {
 	return false
 }
 
+//TypeName simple type or reference (by-name)
+type Map struct {
+	name  string
+	key   string
+	value ProtoType
+}
+
+//Declare : ProtoType interface realization
+func (t *Map) Declare(w *os.File) {
+	fmt.Fprintf(w, "map<%s, value>", t.key, t.value.Name())
+}
+
+//Name :  ProtoType interface realization
+func (t *Map) Name() string {
+	return "map<" + t.key + ", " + t.value.Name() + ">"
+}
+
+//Repeated
+func (t *Map) Repeated() bool {
+	return false
+}
+
 // ARRAY
 type Array struct {
 	typedecl ProtoType
@@ -179,6 +201,7 @@ func makeRefindex(oa *oasmodel.OpenAPI) map[string]refIndexElement {
 func CreateType(name string, schema *oasmodel.SchemaOrRef, refIndex map[string]refIndexElement, Parent *Message) ProtoType {
 	if schema.Ref != nil {
 		// search referenced object
+		// TODO : make recursive method to support refs of refs
 		if elem, ok := refIndex[schema.Ref.Ref]; ok {
 			node := TypeName{elem.name, ""}
 			return &node
@@ -186,10 +209,62 @@ func CreateType(name string, schema *oasmodel.SchemaOrRef, refIndex map[string]r
 		return nil
 	}
 
+	if schema.Val.AllOf != nil {
+		node := Message{name, nil, nil}
+		num := 0
+		// parse all allOf members
+		for i := range schema.Val.AllOf {
+			current := schema.Val.AllOf[i]
+			var defVal *oasmodel.Schema
+			defVal = nil
+			// Verify that composer is a object
+			if current.Ref != nil {
+				if elem, ok := refIndex[current.Ref.Ref]; ok {
+					defVal = elem.schema.Val // assume there is no refs of refs
+				} else {
+					fmt.Fprintf(os.Stderr, "can't find ref %s\n", current.Ref.Ref)
+					return nil
+				}
+			} else {
+				defVal = current.Val
+			}
+			if defVal.Type != "object" {
+				fmt.Fprintf(os.Stderr, "can't support allOf without ref %s\n", current.Ref.Ref)
+				return nil
+			}
+			// now we have an object => copy properties
+
+			for m := range defVal.Properties {
+				num++
+				f := MessageMembers{nil, m, num, nil}
+				prop := defVal.Properties[m]
+				t := CreateType(name+"_"+m, prop, refIndex, &node)
+				f.typedecl = t
+				node.body = append(node.body, f)
+			}
+		}
+
+		return &node
+	}
+
+	// Case AdditionnalProperties
+	if schema.Val.AdditionalProperties != nil {
+		// MUST be type object
+		if schema.Val.Type != "object" {
+			fmt.Fprintf(os.Stderr, "Schema %s with Additional Properties MUST be an object\n", name)
+		}
+		objType := CreateType(name+"Elem", schema.Val.AdditionalProperties.Schema, refIndex, Parent)
+		node := Map{name, "string", objType}
+		return &node
+	}
+
 	if schema.Val.Type == "object" {
+
+		// otherwise
 		node := Message{name, nil, nil}
 		// parse elements
 		num := 0
+
 		for m := range schema.Val.Properties {
 			num++
 			f := MessageMembers{nil, m, num, nil}
