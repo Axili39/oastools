@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -44,9 +43,11 @@ func main() {
 	cmd := exec.Command("protoc", "--go_out=.", protofilename)
 	var out bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = os.Stdout
 	err = cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "error running protoc command %v\n", err)
+		os.Exit(1)
 	}
 
 	// Step 3: Generate filetoolcmd for package
