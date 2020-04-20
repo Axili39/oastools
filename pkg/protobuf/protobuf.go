@@ -74,6 +74,44 @@ func (t *TypeName) Repeated() bool {
 }
 
 //TypeName simple type or reference (by-name)
+type Enum struct {
+	name   string
+	values []string
+}
+
+//Declare : ProtoType interface realization
+/* Example :
+enum Corpus {
+    UNIVERSAL = 0;
+    WEB = 1;
+    IMAGES = 2;
+    LOCAL = 3;
+    NEWS = 4;
+    PRODUCTS = 5;
+    VIDEO = 6;
+  }
+*/
+func (t *Enum) Declare(w *os.File) {
+	fmt.Fprintf(w, "enum %s {", t.name)
+	values := 0
+	for i := range t.values {
+		fmt.Fprintf(w, "%s = %d;", t.values[i], values)
+		values++
+	}
+	fmt.Fprintf(w, "}")
+}
+
+//Name :  ProtoType interface realization
+func (t *Enum) Name() string {
+	return t.name
+}
+
+//Repeated
+func (t *Enum) Repeated() bool {
+	return false
+}
+
+//Map
 type Map struct {
 	name  string
 	key   string
@@ -294,6 +332,18 @@ func CreateType(name string, schema *oasmodel.SchemaOrRef, refIndex map[string]r
 		node := TypeName{"int32", ""}
 		return &node
 	}
+
+	// Enums
+	if schema.Val.Type == "string" && len(schema.Val.Enum) > 0 {
+		node := Enum{name, nil}
+		for i := range schema.Val.Enum {
+			node.values = append(node.values, schema.Val.Enum[i])
+		}
+		if Parent != nil {
+			Parent.nested = append(Parent.nested, &node)
+		}
+		return &node
+	}
 	node := TypeName{schema.Val.Type, ""}
 	return &node
 }
@@ -310,6 +360,8 @@ func Components2Proto(oa *oasmodel.OpenAPI, f *os.File) {
 	}
 
 	fmt.Fprintf(f, "syntax = \"proto3\";\n")
+	//fmt.Fprintf(f, "option go_package = \"lux\";\n") //TODO get packagename
+	// fmt.Fprintf(f, "option go_api_version = \"protoc-gen-go/v2\";\n")
 	for n := range nodeList {
 		nodeList[n].Declare(f)
 	}

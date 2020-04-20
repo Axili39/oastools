@@ -3,7 +3,7 @@ package oasjstree
 import (
 	"log"
 
-	"../../pkg/oasmodel"
+	"../oasmodel"
 )
 
 const iconPath = "./dist/oas/"

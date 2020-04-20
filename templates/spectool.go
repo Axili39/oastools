@@ -5,13 +5,14 @@ import(
 	"os"
 	"flag"
 	"../../pkg/oatool"
+	"google.golang.org/protobuf/proto"
 	"../{{.Package}}"
 )
 
 {{ $package := .Package }}
 
 /* Package */
-func GetObjByName(node string) interface{} {
+func GetObjByName(node string) proto.Message {
 	switch node {
 	{{ range $val := .Components }}
 		case "{{ $val }}":
