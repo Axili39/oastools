@@ -68,12 +68,12 @@ func (t *TypeName) Name() string {
 	return t.name
 }
 
-//Repeated
+//Repeated ProtoType interface realization
 func (t *TypeName) Repeated() bool {
 	return false
 }
 
-//TypeName simple type or reference (by-name)
+//Enum simple type or reference (by-name)
 type Enum struct {
 	name   string
 	values []string
@@ -106,12 +106,12 @@ func (t *Enum) Name() string {
 	return t.name
 }
 
-//Repeated
+//Repeated :ProtoType interface realization
 func (t *Enum) Repeated() bool {
 	return false
 }
 
-//Map
+//Map object, used to represents AdditionalProperties
 type Map struct {
 	name  string
 	key   string
@@ -128,12 +128,12 @@ func (t *Map) Name() string {
 	return "map<" + t.key + ", " + t.value.Name() + ">"
 }
 
-//Repeated
+//Repeated :  ProtoType interface realization
 func (t *Map) Repeated() bool {
 	return false
 }
 
-// ARRAY
+// Array : array of Prototype
 type Array struct {
 	typedecl ProtoType
 }
@@ -149,7 +149,7 @@ func (t *Array) Name() string {
 	return t.typedecl.Name()
 }
 
-//Repeated
+//Repeated :  ProtoType interface realization
 func (t *Array) Repeated() bool {
 	return true
 }
@@ -214,7 +214,7 @@ func (t *Message) Name() string {
 	return t.name
 }
 
-//Repeated
+//Repeated : ProtoType interface realization
 func (t *Message) Repeated() bool {
 	return false
 }
@@ -361,7 +361,6 @@ func Components2Proto(oa *oasmodel.OpenAPI, f *os.File) {
 
 	fmt.Fprintf(f, "syntax = \"proto3\";\n")
 	//fmt.Fprintf(f, "option go_package = \"lux\";\n") //TODO get packagename
-	// fmt.Fprintf(f, "option go_api_version = \"protoc-gen-go/v2\";\n")
 	for n := range nodeList {
 		nodeList[n].Declare(f)
 	}
