@@ -158,17 +158,20 @@ paths:
 components:
   schemas:
     TopologyDef:
+      description: "Description de la topology"
       type: object
       required:
         - name
         - nodes
       properties:
         name:
+          description: "Nom"
           type: string
         options:
           type: object
           properties:
             adminNetworkBridge:
+              description: "nom du bridge à utiliser pour le réseau d'admin"
               type: string
         nodes:
           type: object

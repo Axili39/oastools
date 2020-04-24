@@ -74,6 +74,7 @@ type OASArray struct {
 type objectMember struct {
 	Type OASType
 	Name string
+	Description string
 }
 
 //OASObject : object structure
@@ -173,7 +174,7 @@ func SchemaToJst(name string, schema oasmodel.SchemaOrRef) OASType {
 			if schema.Val.Properties[m].Val != nil {
 				desc = schema.Val.Properties[m].Val.Description
 			}
-			o.Members[m] = objectMember{mtype, memberToHTML(m, desc)}
+			o.Members[m] = objectMember{mtype, m, desc}
 		}
 		return &o
 	}

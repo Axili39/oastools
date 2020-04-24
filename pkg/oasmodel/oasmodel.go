@@ -9,7 +9,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-/*OpenApi From OAS
+
+//refIndexElement part of map used to resolve $ref directive
+type refIndexElement struct {
+	name   string	
+	schema *SchemaOrRef
+}
+
+/*OpenAPI From OAS
 openapi 		string 	REQUIRED. 			This string MUST be the semantic version number of the OpenAPI Specification version that the OpenAPI document uses. The openapi field SHOULD be used by tooling specifications and clients to interpret the OpenAPI document. This is not related to the API info.version string.
 info 			Info Object 	REQUIRED. 	Provides metadata about the API. The metadata MAY be used by tooling as required.
 servers 		[Server Object] 			An array of Server Objects, which provide connectivity information to a target server. If the servers property is not provided, or is an empty array, the default value would be a Server Object with a url value of /.
@@ -28,6 +35,7 @@ type OpenAPI struct {
 	Security     []SecurityReq       `yaml:"security,omitempty"`
 	Tags         []Tag               `yaml:"tags,omitempty"`
 	ExternalDocs ExternalDocs        `yaml:"externalDocs,omitempty"`
+	refIndex	 map[string]refIndexElement	`yaml:"-"`
 }
 
 /*Tag Object from OAS
@@ -326,7 +334,7 @@ type Response struct {
 
 type Callback map[string]PathItem
 
-// Implements the Unmarshaler interface of the yaml pkg.
+//UnmarshalYAML Implements the Unmarshaler interface of the yaml pkg.
 func (e *CallbackOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	*e = CallbackOrRef{}
 	ref := Ref{}
@@ -382,7 +390,7 @@ server				Server Object					A server object to be used by the target operation.
 type Link struct {
 	Ref          string                 `yaml:"$ref,omitempty"`
 	OperationRef string                 `yaml:"operationRef,omitempty"`
-	OperationId  string                 `yaml:"operationId,omitempty"`
+	OperationID  string                 `yaml:"operationId,omitempty"`
 	Parameters   map[string]interface{} `yaml:"parameters,omitempty"`
 	RequestBody  map[string]interface{} `yaml:"requestBody,omitempty"`
 	Description  string                 `yaml:"description,omitempty"`
@@ -532,6 +540,7 @@ type XML struct {
 
 type Ref struct {
 	Ref string `yaml:"$ref,omitempty"`
+	Resolved interface{} `yaml:"-"`
 }
 type CallbackOrRef struct {
 	Ref *Ref
@@ -743,4 +752,96 @@ func (c *OpenAPI) Save() {
 		log.Fatalf("Marshal: %v", err)
 	}
 	fmt.Fprintf(os.Stdout, "%s", string(buf))
+}
+
+
+// $ref resolver
+func (oa *OpenAPI)makeSchemaRefIndex() map[string]refIndexElement {
+	refIndex := make(map[string]refIndexElement)
+	for k,v := range oa.Components.Schemas {
+		refIndex["#/components/schemas/"+k] = refIndexElement{"types." + k, v}
+		v.fillRefIndex("#/components/schemas/"+k, "types." + k, refIndex)
+	}
+	return refIndex
+}
+
+// ResolveRefs
+func (oa *OpenAPI)ResolveRefs() {
+	refIndex := oa.makeSchemaRefIndex()
+	for _,v := range oa.Components.Schemas {
+		v.resolveRefs(refIndex)
+	}
+}
+
+func (s *SchemaOrRef)fillRefIndex(yPath string, path string, refIndex map[string]refIndexElement) {
+	if s.Ref != nil {
+		return
+	}
+	if s.Val.Properties != nil {
+		for p,v := range s.Val.Properties {
+			// add property to Index
+			refIndex[yPath+"/Properties/"+p] = refIndexElement{path+"."+p, v}
+			v.fillRefIndex(yPath+"/"+p, path+"."+p, refIndex)
+		}
+	}
+	/* TODO Doit for
+	AllOf                []*SchemaOrRef          `yaml:"allOf,omitempty"`
+	OneOf                []*SchemaOrRef          `yaml:"oneOf,omitempty"`
+	AnyOf                []*SchemaOrRef          `yaml:"anyOf,omitempty"`
+	Items                *SchemaOrRef            `yaml:"items,omitempty"`
+	*/
+	
+}
+func (s *SchemaOrRef)resolveRefs(refIndex map[string]refIndexElement) {	
+	if s.Ref != nil {
+		log.Printf("Resolving %s ...\n", s.Ref.Ref)
+		if elem, ok := refIndex[s.Ref.Ref]; ok {
+			log.Printf("Resolving %s int %v\n", s.Ref.Ref, elem.schema)
+			s.Ref.Resolved = elem.schema
+		} else {
+			log.Printf("Can't Resolve %s\n", s.Ref.Ref)
+		}
+		return
+	}
+
+	if s.Val.Properties != nil {
+		for p,v := range s.Val.Properties {
+			log.Printf("visit %s ...\n", p)
+			v.resolveRefs(refIndex)
+		}
+	}
+	if s.Val.Items != nil {
+		s.Val.Items.resolveRefs(refIndex)
+	}
+	if s.Val.AllOf != nil {
+		for p,v := range s.Val.AllOf {
+			log.Printf("visit %s ...\n", p)
+			v.resolveRefs(refIndex)
+		}
+	}
+	if s.Val.OneOf != nil {
+		for p,v := range s.Val.OneOf {
+			log.Printf("visit %s ...\n", p)
+			v.resolveRefs(refIndex)
+		}
+	}
+	if s.Val.AnyOf != nil {
+		for p,v := range s.Val.OneOf {
+			log.Printf("visit %s ...\n", p)
+			v.resolveRefs(refIndex)
+		}
+	}
+	if s.Val.AdditionalProperties != nil {
+		s.Val.AdditionalProperties.Schema.resolveRefs(refIndex)
+	}
+}
+func (s *SchemaOrRef)Schema() *Schema {
+	if s.Val != nil {
+		return s.Val
+	}
+	if s.Ref != nil && s.Ref.Resolved != nil{
+		return s.Ref.Resolved.(*SchemaOrRef).Schema()
+	}
+	log.Fatalf("unable to convert %s into valid schema", s.Ref.Ref)
+	return nil
 }
