@@ -1,0 +1,256 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Lux API
+  license:
+    name: MIT
+servers:
+  - url: http://github.com/Axili39/lux
+paths:
+  /topologies:
+    get:
+      summary: List all topologies
+      operationId: getTopologies
+      tags:
+        - Topologies
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:    
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopologyStatus"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create new topology
+      operationId: createTopology
+      tags:
+        - Topologies
+        - Creation
+      requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopologyDef"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/TopologyStatus"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /topologies/by-id/{id}:
+    delete:
+      summary: Delete existing Topology
+      operationId: removeTopologyById
+      tags:
+        - Topologies
+        - Deletion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/TopologyStatus"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: Delete existing Topology
+      operationId: getTopologyById
+      tags:
+        - Topologies
+        - Deletion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/Topology"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /topologies/by-name/{name}:
+    delete:
+      summary: Delete existing Topology by name
+      operationId: removeTopologyByName
+      tags:
+        - Topologies
+        - Deletion
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/Topology"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: Delete existing Topology by name
+      operationId: getTopologyByName
+      tags:
+        - Topologies
+        - Deletion
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/Topology"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    TopologyDef:
+      type: object
+      required:
+        - name
+        - nodes
+      properties:
+        name:
+          type: string
+        options:
+          type: object
+          properties:
+            adminNetworkBridge:
+              type: string
+        nodes:
+          type: object
+          additionalProperties: 
+            $ref: "#/components/schemas/Node"
+          example:
+            node1:
+              name: mydevice
+              networks:
+                net1:
+                  ifname: eth0
+                  ip4addr: 10.0.0.1/24
+                  macaddr: 00:12:EE:45:EF:01
+        networks:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Network"
+    Node:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+        networks:
+          type: object
+          additionalProperties:
+            type: object
+            required:
+            - name
+            properties:
+              name: 
+                type: string
+              ifname:
+                type: string
+              ip4addr:
+                type: string
+              dhcp:
+                type: boolean
+              mac:
+                type: string
+    Network:
+      type: object
+      properties:
+        ipaddr:
+          type: string
+        usedns:
+          type: boolean
+        usedhcp:
+          type: boolean
+    Topology:
+      allOf:
+      - $ref: '#/components/schemas/TopologyDef'
+      - type: object
+        required:
+        - id
+        properties:
+          id:
+            type: string
+    TopologyStatus:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - INITIALIZING
+          - STOPPED
+          - STARTED
+          - ERROR
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+

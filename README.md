@@ -11,10 +11,24 @@ Build Project:
 make
 ```
 
+cross-Build Project for windows
+```
+make
+GOOS=windows make
+or 
+GOARCH=386 GOOS=windows make
+```
+
 Build zip bundle to export portable App (if wanted)
 ```
 make bundle
 ```
+Tools:
+======
+* **oatree**: Dump model as Simple Tree,
+* **oatoolgen**: Generate a tool for managing yaml, json or binary encoded files specified by a Open Api Schema.
+* **oa2proto**: convert OpenApi spec into protobuf .proto spec file.
+* **mdlexplorer**: html / embedded web serber to interactively explore data model specified with OpenApi
 
 Data Model Explorer
 -------------------

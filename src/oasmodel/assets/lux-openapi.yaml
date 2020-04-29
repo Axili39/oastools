@@ -1,0 +1,246 @@
+openapi: 3.0.0
+info:
+    title: Lux API
+    license:
+        name: MIT
+    version: 1.0.0
+servers:
+  - url: http://github.com/Axili39/lux
+paths:
+    /topologies:
+        get:
+            tags:
+              - Topologies
+            summary: List all topologies
+            operationId: getTopologies
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/TopologyStatus'
+                default:
+                    description: unexpected error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+        post:
+            tags:
+              - Topologies
+              - Creation
+            summary: Create new topology
+            operationId: createTopology
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TopologyDef'
+                required: false
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TopologyStatus'
+                default:
+                    description: unexpected error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+    /topologies/by-id/{id}:
+        get:
+            tags:
+              - Topologies
+              - Deletion
+            summary: Delete existing Topology
+            operationId: getTopologyById
+            parameters:
+              - name: id
+                in: path
+                required: true
+                schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Topology'
+                default:
+                    description: unexpected error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+        delete:
+            tags:
+              - Topologies
+              - Deletion
+            summary: Delete existing Topology
+            operationId: removeTopologyById
+            parameters:
+              - name: id
+                in: path
+                required: true
+                schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TopologyStatus'
+                default:
+                    description: unexpected error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+    /topologies/by-name/{name}:
+        get:
+            tags:
+              - Topologies
+              - Deletion
+            summary: Delete existing Topology by name
+            operationId: getTopologyByName
+            parameters:
+              - name: name
+                in: path
+                required: true
+                schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Topology'
+                default:
+                    description: unexpected error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+        delete:
+            tags:
+              - Topologies
+              - Deletion
+            summary: Delete existing Topology by name
+            operationId: removeTopologyByName
+            parameters:
+              - name: name
+                in: path
+                required: true
+                schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Topology'
+                default:
+                    description: unexpected error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+components:
+    schemas:
+        Error:
+            type: object
+            required:
+              - code
+              - message
+            properties:
+                code:
+                    type: integer
+                    format: int32
+                message:
+                    type: string
+        Network:
+            type: object
+            properties:
+                ipaddr:
+                    type: string
+                usedhcp:
+                    type: boolean
+                usedns:
+                    type: boolean
+        Node:
+            type: object
+            required:
+              - name
+            properties:
+                name:
+                    type: string
+                networks:
+                    type: object
+                    additionalProperties:
+                        type: object
+                        required:
+                          - name
+                        properties:
+                            dhcp:
+                                type: boolean
+                            ifname:
+                                type: string
+                            ip4addr:
+                                type: string
+                            mac:
+                                type: string
+                            name:
+                                type: string
+        Topology:
+            allOf:
+              - $ref: '#/components/schemas/TopologyDef'
+              - type: object
+                required:
+                  - id
+                properties:
+                    id:
+                        type: string
+        TopologyDef:
+            type: object
+            required:
+              - name
+              - nodes
+            properties:
+                name:
+                    type: string
+                networks:
+                    type: object
+                    additionalProperties: {}
+                nodes:
+                    type: object
+                    additionalProperties: {}
+                    example: {}
+                options:
+                    type: object
+                    properties:
+                        adminNetworkBridge:
+                            type: string
+        TopologyStatus:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                status:
+                    type: string
+                    enum:
+                      - INITIALIZING
+                      - STOPPED
+                      - STARTED
+                      - ERROR

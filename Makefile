@@ -1,36 +1,22 @@
-all:oatree  mdlexplore oa2proto oatoolgen 
+ifeq ($(GOOS),windows)
+	EXT=.exe
+	ifeq ($(GOARCH),)
+		GOARCH=amd64
+	endif
+endif
+BIN=$(shell pwd)/bin
+all: oa2proto oatoolgen oatree mdlexplore
 clean:
-	rm -f bundle.zip
-	rm -f mdlexplore
-	rm -f oa2proto
-	rm -f oatoolgen
-	rm -f oatree
-	rm -f *.exe
+	rm -f bin/*
 
-oatree: cmd/oatree.go pkg/oasmodel/oasmodel.go pkg/asciitree/asciitree.go
-	go build cmd/oatree.go
-	GOOS=windows GOARCH=386 go build -o oatree.exe cmd/oatree.go
+oa2proto: src/oa2proto/oa2proto.go
+	cd src/$@ && go build -o ${BIN}/$@${EXT}
 
-oatoolgen: cmd/oatoolgen.go pkg/protobuf/protobuf.go pkg/oasmodel/oasmodel.go
-	go build cmd/oatoolgen.go
-	GOOS=windows GOARCH=386 go build -o oatoolgen.exe cmd/oatoolgen.go
+oatoolgen: src/oatoolgen/oatoolgen.go
+	cd src/$@ && go build -o ${BIN}/$@${EXT}
 
-oa2proto: cmd/oa2proto.go pkg/protobuf/protobuf.go
-	go build cmd/oa2proto.go
-	GOOS=windows GOARCH=386 go build -o oa2proto.exe cmd/oa2proto.go
+oatree: src/oatree/oatree.go
+	cd src/$@ && go build -o ${BIN}/$@${EXT}
 
-mdlexplore: cmd/mdlexplore.go pkg/oasjstree/oasjstree.go
-	go build cmd/mdlexplore.go
-	GOOS=windows GOARCH=386 go build -o mdlexplore.exe cmd/mdlexplore.go
-	
-bundle: all
-	mkdir -p /tmp/mdlbuild
-	cp -r dist /tmp/mdlbuild
-	cp -r templates /tmp/mdlbuild
-	cp mdlexplore* /tmp/mdlbuild
-	cp oa2proto* /tmp/mdlbuild
-	cp oatoolgen* /tmp/mdlbuild
-	cp oatree* /tmp/mdlbuild
-	cd /tmp/mdlbuild && zip -r ${PWD}/bundle.zip *  && cd -
-	rm -rf /tmp/mdlbuild
-
+mdlexplore: src/mdlexplore/mdlexplore.go
+	cd src/$@ && go build -o ${BIN}/$@${EXT}

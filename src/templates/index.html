@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <link href='https://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <link href='./dist/mdlexplorer-style.css' rel='stylesheet' type='text/css'>
+  </head>
+  <body>
+    <div class="wrapper">
+        <h1>Choose Open Api File</h1>
+        <p>File shall be compliant with openapi 3.0.3 specs</p>
+        <form class="form" method="post" action="/upload" enctype="multipart/form-data">
+          <input type="file" class="name" placeholder="" name="oasFile">
+          <div>
+            <p class="name-help">Enter node to explore</p>
+          </div>
+          <input type="text" class="name" placeholder="node" name="Root">
+           <div>
+            <p class="email-help">Please enter your current email address.</p>
+          </div>
+          <input type="submit" class="submit" value="Start Explore">
+        </form>
+      </div>
+      <p class="optimize">
+        Optimized for Chrome & Firefox!
+      </p>
+      
+  </body>
+</html>

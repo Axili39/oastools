@@ -1,0 +1,44 @@
+syntax = "proto3";
+message TopologyStatus {
+enum TopologyStatus_status {INITIALIZING = 0;STOPPED = 1;STARTED = 2;ERROR = 3;}string id = 1;
+string name = 2;
+TopologyStatus_status status = 3;
+}
+message Error {
+int32 code = 1;
+string message = 2;
+}
+message TopologyDef {
+message TopologyDef_options {
+string adminNetworkBridge = 1;
+}
+string name = 1;
+TopologyDef_options options = 2;
+map<string, Node> nodes = 3;
+map<string, Network> networks = 4;
+}
+message Node {
+message Node_networksElem {
+bool dhcp = 1;
+string mac = 2;
+string ifname = 3;
+string ip4addr = 4;
+}
+string description = 1;
+map<string, Node_networksElem> networks = 2;
+}
+message Network {
+string ipaddr = 1;
+bool usedns = 2;
+bool usedhcp = 3;
+}
+message Topology {
+message Topology_options {
+string adminNetworkBridge = 1;
+}
+string name = 1;
+Topology_options options = 2;
+map<string, Node> nodes = 3;
+map<string, Network> networks = 4;
+string id = 5;
+}
