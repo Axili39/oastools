@@ -344,6 +344,13 @@ func CreateType(name string, schema *oasmodel.SchemaOrRef, refIndex map[string]r
 		}
 		return &node
 	}
+
+	// bytes
+	if schema.Val.Type == "string" && schema.Val.Format == "binary" {
+		node := TypeName{"bytes", ""}
+		return &node
+	}
+	
 	node := TypeName{schema.Val.Type, ""}
 	return &node
 }
