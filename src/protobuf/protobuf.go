@@ -47,7 +47,7 @@ message outer {
 
 //ProtoType Field Type protocol buffer interface
 type ProtoType interface {
-	Declare(w *os.File)
+	Declare(w *os.File, indent string)
 	Name() string
 	Repeated() bool
 }
@@ -59,7 +59,7 @@ type TypeName struct {
 }
 
 //Declare : ProtoType interface realization
-func (t *TypeName) Declare(w *os.File) {
+func (t *TypeName) Declare(w *os.File, indent string) {
 	// does't exist in protobuf
 }
 
@@ -91,14 +91,14 @@ enum Corpus {
     VIDEO = 6;
   }
 */
-func (t *Enum) Declare(w *os.File) {
-	fmt.Fprintf(w, "\tenum %s {\n", t.name)
+func (t *Enum) Declare(w *os.File, indent string) {
+	fmt.Fprintf(w, "%senum %s {\n", indent, t.name)
 	values := 0
 	for i := range t.values {
-		fmt.Fprintf(w, "\t\t%s = %d;\n", t.values[i], values)
+		fmt.Fprintf(w, "%s\t%s = %d;\n", indent, t.values[i], values)
 		values++
 	}
-	fmt.Fprintf(w, "\t}\n")
+	fmt.Fprintf(w, "%s}\n",indent)
 }
 
 //Name :  ProtoType interface realization
@@ -119,7 +119,7 @@ type Map struct {
 }
 
 //Declare : ProtoType interface realization
-func (t *Map) Declare(w *os.File) {
+func (t *Map) Declare(w *os.File , indent string) {
 	fmt.Fprintf(w, "map<%s, value>", t.key, t.value.Name())
 }
 
@@ -139,9 +139,9 @@ type Array struct {
 }
 
 //Declare : ProtoType interface realization
-func (t *Array) Declare(w *os.File) {
+func (t *Array) Declare(w *os.File, indent string) {
 	// does't exist in protobuf
-	t.typedecl.Declare(w)
+	t.typedecl.Declare(w, indent)
 }
 
 //Name :  ProtoType interface realization
@@ -172,8 +172,8 @@ type MessageMembers struct {
 }
 
 //Declare : Message Member declaration
-func (t *MessageMembers) Declare(w *os.File) {
-	fmt.Fprintf(w,"\t")
+func (t *MessageMembers) Declare(w *os.File, indent string) {
+	fmt.Fprintf(w,"%s", indent)
 	// repeated
 	if t.typedecl.Repeated() {
 		fmt.Fprintf(w, "repeated ")
@@ -197,17 +197,17 @@ type Message struct {
 }
 
 //Declare : ProtoType interface realization
-func (t *Message) Declare(w *os.File) {
-	fmt.Fprintf(w, "message %s {\n", t.name)
+func (t *Message) Declare(w *os.File, indent string) {
+	fmt.Fprintf(w, "%smessage %s {\n", indent, t.name)
 	// nested
 	for n := range t.nested {
-		t.nested[n].Declare(w)
+		t.nested[n].Declare(w, indent + "\t")
 	}
 	// body
 	for m := range t.body {
-		t.body[m].Declare(w)
+		t.body[m].Declare(w, indent+"\t")
 	}
-	fmt.Fprintf(w, "}\n")
+	fmt.Fprintf(w, "%s}\n", indent)
 }
 
 //Name :  ProtoType interface realization
@@ -328,7 +328,7 @@ func Components2Proto(oa *oasmodel.OpenAPI, f *os.File) {
 	fmt.Fprintf(f, "syntax = \"proto3\";\n")
 	//fmt.Fprintf(f, "option go_package = \"lux\";\n") //TODO get packagename
 	for n := range nodeList {
-		nodeList[n].Declare(f)
+		nodeList[n].Declare(f, "")
 	}
 }
 
