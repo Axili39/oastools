@@ -9,6 +9,10 @@ servers:
 paths:
 components:
   schemas:
+    C:
+      oneOf:
+        - $ref: "#/components/schemas/B"
+        - $ref: "#/components/schemas/C"
     BindAddr:
       type: object
       properties:

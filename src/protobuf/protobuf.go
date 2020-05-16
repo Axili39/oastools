@@ -132,7 +132,32 @@ func (t *Map) Name() string {
 func (t *Map) Repeated() bool {
 	return false
 }
+// Array : array of Prototype
+type Oneof struct {
+	name string
+	members []MessageMembers
+}
 
+//Declare : ProtoType interface realization
+func (t *Oneof) Declare(w *os.File, indent string) {
+	fmt.Fprintf(w, "%smessage %s {\n", indent, t.name)
+	fmt.Fprintf(w, "%s\toneof select {\n", indent)
+	// body
+	for m := range t.members {
+		t.members[m].Declare(w, indent+"\t\t")
+	}
+	fmt.Fprintf(w, "\t%s}\n%s}\n", indent,indent)
+}
+
+//Name :  ProtoType interface realization
+func (t *Oneof) Name() string {
+	return t.name
+}
+
+//Repeated :  ProtoType interface realization
+func (t *Oneof) Repeated() bool {
+	return false
+}
 // Array : array of Prototype
 type Array struct {
 	typedecl ProtoType
@@ -226,7 +251,18 @@ func CreateType(name string, schema *oasmodel.SchemaOrRef, Parent *Message) Prot
 		node := TypeName{schema.Ref.RefName, ""}
 		return &node
 	}
-
+	if schema.Val.OneOf != nil {
+		node := Oneof{name, nil}
+		num := 0
+		for i := range schema.Val.OneOf {
+			num++
+			prop := schema.Val.OneOf[i]
+			t := CreateType("YYY", prop, Parent)
+			f := MessageMembers{t, t.Name() + "Value", num, nil}			
+			node.members = append(node.members, f)
+		}
+		return &node
+	}
 	if schema.Val.AllOf != nil {
 		node := Message{name, nil, nil}
 		num := 0
