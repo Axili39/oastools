@@ -3,7 +3,7 @@ package protobuf
 import (
 	"fmt"
 	"os"
-
+	"sort"
 	"github.com/Axili39/oastools/oasmodel"
 )
 
@@ -269,7 +269,14 @@ func CreateType(name string, schema *oasmodel.SchemaOrRef, Parent *Message) Prot
 		// parse all allOf members
 		for i := range schema.Val.AllOf {
 			current := schema.Val.AllOf[i].Schema()
-			for m := range current.Properties {
+			var keys[]string
+			if len(current.XPropertiesOrder) > 0 {
+				keys = current.XPropertiesOrder
+			} else {
+				keys = keysorder(current.Properties)
+			}
+			for i := range keys {
+				m := keys[i]
 				num++
 				f := MessageMembers{nil, m, num, nil}
 				prop := current.Properties[m]
@@ -298,8 +305,14 @@ func CreateType(name string, schema *oasmodel.SchemaOrRef, Parent *Message) Prot
 		node := Message{name, nil, nil}
 		// parse elements
 		num := 0
-
-		for m := range schema.Val.Properties {
+		var keys []string
+		if len(schema.Val.XPropertiesOrder) > 0 {
+			keys = schema.Val.XPropertiesOrder
+		} else {
+			keys = keysorder(schema.Val.Properties)
+		}
+		for i := range keys {
+			m := keys[i]
 			num++
 			f := MessageMembers{nil, m, num, nil}
 			prop := schema.Val.Properties[m]
@@ -351,27 +364,33 @@ func CreateType(name string, schema *oasmodel.SchemaOrRef, Parent *Message) Prot
 	return &node
 }
 
+func keysorder(m map[string]*oasmodel.SchemaOrRef) ([]string) {
+	keys := make([]string, len(m))
+	i := 0
+	for k := range m {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 //Components2Proto : generate proto file from Parsed OpenAPI definition
-func Components2Proto(oa *oasmodel.OpenAPI, f *os.File) {
+func Components2Proto(oa *oasmodel.OpenAPI, f *os.File, packageName string) {
 	oa.ResolveRefs()
 	nodeList := make([]ProtoType, 0, 10)
 	// create first level Nodes
-	for k,v := range oa.Components.Schemas {
+	for _,k := range keysorder(oa.Components.Schemas) {
+			v := oa.Components.Schemas[k]
 			node := CreateType(k, v, nil)
 			nodeList = append(nodeList, node)
 	}
 
 	fmt.Fprintf(f, "syntax = \"proto3\";\n")
-	//fmt.Fprintf(f, "option go_package = \"lux\";\n") //TODO get packagename
+	if packageName != "" {
+		fmt.Fprintf(f, "option go_package = \"%s\";\n", packageName)
+	}
 	for n := range nodeList {
 		nodeList[n].Declare(f, "")
 	}
-}
-
-//Test Function (to be removed)
-func Test() {
-	oa := oasmodel.OpenAPI{}
-	oa.Load("test.yaml")
-
-	Components2Proto(&oa, os.Stdout)
 }

@@ -37,7 +37,7 @@ func main() {
 
 	oa := oasmodel.OpenAPI{}
 	oa.Load(*file)
-	protobuf.Components2Proto(&oa, w)
+	protobuf.Components2Proto(&oa, w, packageName)
 
 	//Step 2: Generate package with protoc
 	cmd := exec.Command("protoc", "--go_out=.", protofilename)

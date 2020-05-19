@@ -15,6 +15,7 @@ components:
         - $ref: "#/components/schemas/C"
     BindAddr:
       type: object
+      x-properties-order: [addr, port]
       properties:
         addr:
           type: string
@@ -22,6 +23,7 @@ components:
           type: integer
     B:
       type: object
+      x-properties-order: [ghi, abc, def]
       properties:
         abc:
           type: string
@@ -36,11 +38,13 @@ components:
             type: string
     A:
       type: object
+      x-properties-order: [def, abc]
       properties:
         abc:
           type: string
         def:
           type: object
+          x-properties-order: [member1, member2, member3]
           properties:
             member1:
               type: string
@@ -50,6 +54,7 @@ components:
               type: array
               items:
                 type: object
+                x-properties-order: [name, valid]
                 properties:
                   name:
                     type: string

@@ -36,6 +36,7 @@ type OpenAPI struct {
 	Tags         []Tag               `yaml:"tags,omitempty"`
 	ExternalDocs ExternalDocs        `yaml:"externalDocs,omitempty"`
 	refIndex	 map[string]refIndexElement	`yaml:"-"`
+	XWsRPC		 map[string]XwsRpcService	`yaml:"x-ws-rpc,omitempty"`
 }
 
 /*Tag Object from OAS
@@ -461,6 +462,7 @@ type Schema struct {
 	OneOf                []*SchemaOrRef          `yaml:"oneOf,omitempty"`
 	AnyOf                []*SchemaOrRef          `yaml:"anyOf,omitempty"`
 	Items                *SchemaOrRef            `yaml:"items,omitempty"`
+	XPropertiesOrder	 []string				 `yaml:"x-properties-order"`
 	Properties           map[string]*SchemaOrRef `yaml:"properties,omitempty"`
 	AdditionalProperties *AdditionalProperties   `yaml:"additionalProperties,omitempty"`
 	Description          string                  `yaml:"description,omitempty"`
@@ -734,16 +736,18 @@ func (c *OpenAPI) UnMarshal(buffer []byte) (*OpenAPI, error) {
 }
 
 //Load Charge le fichier de spec d'interface
-func (c *OpenAPI) Load(filename string) *OpenAPI {
+func (c *OpenAPI) Load(filename string) error {
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Printf("yamlFile.Get err   #%v ", err)
+		return err
 	}
 	err = yaml.Unmarshal(yamlFile, c)
 	if err != nil {
 		log.Fatalf("Unmarshal: %v", err)
+		return err
 	}
-	return c
+	return nil
 }
 
 //Save dump la spec courante

@@ -5,7 +5,7 @@ ifeq ($(GOOS),windows)
 	endif
 endif
 BIN=$(shell pwd)/bin
-all: oa2proto oatoolgen oatree mdlexplore
+all: oa2proto oatoolgen oatree mdlexplore gengowapi
 clean:
 	rm -f bin/*
 
@@ -19,4 +19,7 @@ oatree: src/oatree/oatree.go
 	cd src/$@ && go build -o ${BIN}/$@${EXT}
 
 mdlexplore: src/mdlexplore/mdlexplore.go
+	cd src/$@ && go build -o ${BIN}/$@${EXT}
+
+gengowapi: src/gengowapi/gengowapi.go
 	cd src/$@ && go build -o ${BIN}/$@${EXT}

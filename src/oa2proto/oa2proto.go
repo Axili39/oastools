@@ -11,6 +11,7 @@ import (
 func main() {
 	file := flag.String("f", "test.yaml", "yaml file to parse")
 	out := flag.String("o", "", "output file")
+	packageName := flag.String("p","", "package name")
 	flag.Parse()
 
 	var output *os.File
@@ -28,5 +29,5 @@ func main() {
     
 	oa := oasmodel.OpenAPI{}
 	oa.Load(*file)
-	protobuf.Components2Proto(&oa, output)
+	protobuf.Components2Proto(&oa, output, *packageName)
 }
