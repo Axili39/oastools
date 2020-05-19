@@ -1,4 +1,6 @@
-# oastools
+oastools
+==========
+
 Open Api Specs tools
 
 First clone project:
@@ -29,6 +31,7 @@ Tools:
 * **oatoolgen**: Generate a tool for managing yaml, json or binary encoded files specified by a Open Api Schema.
 * **oa2proto**: convert OpenApi spec into protobuf .proto spec file.
 * **mdlexplorer**: html / embedded web serber to interactively explore data model specified with OpenApi
+* **gengowapi**: go code generator from OAS file. Generated server use gowapi miniframework ans support x-ws-rpc (Web Socket RPC oas extension)
 
 Data Model Explorer
 -------------------
