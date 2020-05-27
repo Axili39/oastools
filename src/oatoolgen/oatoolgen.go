@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/Axili39/oastools/oatoolgen/resources"
 	"github.com/Axili39/oastools/oasmodel"
 	"github.com/Axili39/oastools/protobuf"
 )
@@ -18,9 +19,22 @@ type genCtx struct {
 	Components []string
 }
 
+func (g *genCtx) generate(wr *os.File) error {
+	fileTemplate := template.Must(template.New("").Parse(string(resources.Files["spectool.go.template"])))
+	
+	err := fileTemplate.Execute(wr,g)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error executing template", err)
+	}
+	// TODO format generated code with go/format
+	return err
+}
+
+
 func main() {
 	var file = flag.String("f", "", "oas file")
 	flag.Parse()
+	resources.Init()
 
 	sl := strings.Split(*file, ".yaml")
 	packageName := sl[0]
@@ -56,13 +70,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error %v\n", err)
 	}
 	defer wr.Close()
-	generator, err := template.ParseFiles("../templates/spectool.go")
+
 	g := genCtx{packageName, nil}
 	for k := range oa.Components.Schemas {
 		fmt.Println(k)
 		g.Components = append(g.Components, k)
 	}
-	err = generator.ExecuteTemplate(wr, "spectool.go", g)
+
+	err = g.generate(wr)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error %v\n", err)
 	}
