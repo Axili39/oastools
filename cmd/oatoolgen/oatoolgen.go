@@ -1,6 +1,10 @@
 //go:generate sh -c "cd resources ; res2go *.template"
 package main
 
+// TODO : supports -r root node preselection
+// TODO : supports -output package
+// TODO : directly generate binary
+// TODO : supports command name choice
 import (
 	"bytes"
 	"flag"
