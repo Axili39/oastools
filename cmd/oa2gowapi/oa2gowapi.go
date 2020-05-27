@@ -1,8 +1,11 @@
+//go:generate sh -c "cd resources ; res2go gowapi*.template"
+
 package main
 
 import (
 	"github.com/Axili39/oastools/protobuf"
 	"github.com/Axili39/oastools/oasmodel"
+	"github.com/Axili39/oastools/cmd/oa2gowapi/resources"
 	"flag"
 	"os"
 	"fmt"
@@ -103,22 +106,20 @@ func makeGenCtx(packageName string, oa *oasmodel.OpenAPI) genContext {
 // genFile generate a file based on template & genCTX.
 func genFile(outputFile string, tmpl string, ctx genContext, packageName string) error {
 	fmt.Printf("Generating %s code...\n", outputFile)
-	templateDir := os.Getenv("GENGOWAPI_TEMPLATES")
-	if templateDir == "" {
-		templateDir = "../templates/"
+	tmplData := resources.Files[tmpl]
+	if tmplData == nil {
+		return fmt.Errorf("Can't find template %s", tmpl)
 	}
+	generator := template.Must(template.New("").Parse(string(tmplData)))
+
 	goOut, err := os.Create(packageName + "/" + outputFile)
 	if err != nil {
 		fmt.Printf("error opening %s : %v", outputFile, err)
 		return err
 	}
 	defer goOut.Close()
-	generator, err := template.ParseFiles(templateDir + "/" + tmpl)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Can't find template : %s", tmpl)
-		return err
-	}
-	err = generator.ExecuteTemplate(goOut, tmpl, ctx)
+
+	err = generator.Execute(goOut, ctx)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error %v\n", err)
 		return err
@@ -127,6 +128,7 @@ func genFile(outputFile string, tmpl string, ctx genContext, packageName string)
 }
 
 func main() {
+	resources.Init()
 	file := flag.String("f", "test.yaml", "yaml file to parse")
 	output := flag.String("o", "output", "output file")
 	packageName := flag.String("p", "gendefault", "package name")
@@ -171,20 +173,20 @@ func main() {
 	}
 
 	// Server go file
-	err = genFile(*packageName + "-server.go", "gowapi-server.template.go", ctx, *packageName)
+	err = genFile(*packageName + "-server.go", "gowapi-server.go.template", ctx, *packageName)
 	if err != nil  {
 		fmt.Fprintf(os.Stderr, "error : can't generate server code (%v)", err)
 	}
 
 	if *genSqueletons {
-		err = genFile(*packageName + "-impl.go", "gowapi-server-squel.template.go", ctx, *packageName)
+		err = genFile(*packageName + "-impl.go", "gowapi-server-squel.go.template", ctx, *packageName)
 		if err != nil  {
 			fmt.Fprintf(os.Stderr, "error : can't generate server sequeleton code (%v)", err)
 		}
 	}
 
 	if *genClient {
-		err = genFile(*packageName + "-client.go", "gowapi-client.template.go", ctx, *packageName)
+		err = genFile(*packageName + "-client.go", "gowapi-client.go.template", ctx, *packageName)
 		if err != nil  {
 			fmt.Fprintf(os.Stderr, "error : can't generate client code (%v)", err)
 		}

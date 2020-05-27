@@ -1,3 +1,4 @@
+//go:generate sh -c "cd resources ; res2go *.template"
 package main
 
 import (
@@ -9,7 +10,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/Axili39/oastools/oatoolgen/resources"
+	"github.com/Axili39/oastools/cmd/oatoolgen/resources"
 	"github.com/Axili39/oastools/oasmodel"
 	"github.com/Axili39/oastools/protobuf"
 )
