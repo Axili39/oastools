@@ -13,6 +13,7 @@ import (
 	"strings"
 	"os/exec"
 	"bytes"
+	"go/format"
 )
 
 type operation struct {
@@ -118,6 +119,16 @@ func genFile(outputFile string, tmpl string, ctx genContext, packageName string)
 		return err
 	}
 	defer goOut.Close()
+
+	stream := &bytes.Buffer{}
+	err = generator.Execute(stream, ctx)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error executing template", err)
+		return err
+	}
+
+	data, _ := format.Source(stream.Bytes())
+	goOut.Write(data)
 
 	err = generator.Execute(goOut, ctx)
 	if err != nil {

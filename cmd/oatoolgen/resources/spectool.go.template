@@ -4,7 +4,7 @@ import(
 	"fmt"
 	"os"
 	"flag"
-	"github.com/Axili39/oastools/src/oatool"
+	"github.com/Axili39/oastools/oatool"
 	"google.golang.org/protobuf/proto"
 	"../{{.Package}}"
 )

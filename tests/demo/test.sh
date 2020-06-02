@@ -1,8 +1,8 @@
 cycletest()
 {
 	format=$1
-	./demoTool -r A -f data.yaml -o $format > /dev/null
-	./demoTool -r A -f output.$format -o yaml > /dev/null
+	./demoTool -if data.yaml -of output.$format > /dev/null
+	./demoTool -if output.$format -of output.yaml > /dev/null
 	diff data.yaml output.yaml
 	[ $? -ne 0 ] && exit "$format test error"
 }

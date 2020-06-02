@@ -14,18 +14,18 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/Axili39/oastools/cmd/oatoolgen/resources"
+	"github.com/Axili39/oastools/cmd/objtoolgen/resources"
 	"github.com/Axili39/oastools/oasmodel"
 	"github.com/Axili39/oastools/protobuf"
 )
 
 type genCtx struct {
 	Package    string
-	Components []string
+	Component  string
 }
 
 func (g *genCtx) generate(wr *os.File) error {
-	fileTemplate := template.Must(template.New("").Parse(string(resources.Files["resources/spectool.go.template"])))
+	fileTemplate := template.Must(template.New("").Parse(string(resources.Files["resources/objtool.go.template"])))
 	
 	err := fileTemplate.Execute(wr,g)
 	if err != nil {
@@ -38,25 +38,56 @@ func (g *genCtx) generate(wr *os.File) error {
 
 func main() {
 	var file = flag.String("f", "", "oas file")
+	var component = flag.String("c", "", "component name in spec file")
+	var outputfile = flag.String("o", "", "output filename")
+
 	flag.Parse()
 	resources.Init()
 
-	sl := strings.Split(*file, ".yaml")
-	packageName := sl[0]
+	// Some Checks
+	if *file == "" {
+		fmt.Fprintln(os.Stderr, "missing spec file")
+		os.Exit(1)
+	}
+
+	if *component == "" { 
+		fmt.Fprintln(os.Stderr, "missing component name")
+		os.Exit(1)
+	}
+
+	// If package name isn't specified, we take spec file name
+	var output string
+	if *outputfile == "" {
+		sl := strings.Split(*file, ".yaml")
+		output = sl[0]	
+	} else {
+		output = *outputfile
+	}
+
 	// create directory
-	os.MkdirAll(packageName, 0750)
-	os.MkdirAll("cmd", 0750)
-	protofilename := packageName + "/" + packageName + ".proto"
+	os.MkdirAll(output, 0750)
+	
+	protofilename := output + "/" + output + ".proto"
 	// Step 1: Generate .proto with oa2proto
 	w, err := os.Create(protofilename)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error %v\n", err)
+		os.Exit(1)
 	}
 	defer w.Close()
 
 	oa := oasmodel.OpenAPI{}
 	oa.Load(*file)
-	protobuf.Components2Proto(&oa, w, packageName)
+
+	if oa.Components.Schemas[*component] == nil {
+		fmt.Fprintf(os.Stderr, "component %s doesn't exists, candidate are :\n", *component)
+		for k := range oa.Components.Schemas {
+			fmt.Fprintln(os.Stderr,"\t",k)			
+		}		
+		os.Exit(1)
+	}
+
+	protobuf.Components2Proto(&oa, w, "main")
 
 	//Step 2: Generate package with protoc
 	cmd := exec.Command("protoc", "--go_out=.", protofilename)
@@ -70,17 +101,13 @@ func main() {
 	}
 
 	// Step 3: Generate filetoolcmd for package
-	wr, err := os.Create("cmd/" + packageName + "Tool.go")
+	wr, err := os.Create(output +  "/main.go")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error %v\n", err)
 	}
 	defer wr.Close()
-
-	g := genCtx{packageName, nil}
-	for k := range oa.Components.Schemas {
-		fmt.Println(k)
-		g.Components = append(g.Components, k)
-	}
+	// Verify that component exists
+	g := genCtx{"main", *component}
 
 	err = g.generate(wr)
 	if err != nil {

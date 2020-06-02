@@ -5,7 +5,7 @@ ifeq ($(GOOS),windows)
 	endif
 endif
 BIN=$(shell pwd)/bin
-all: oa2proto oatoolgen oatree oa2gowapi
+all: oa2proto oatoolgen oatree oa2gowapi objtoolgen
 clean:
 	rm -f bin/*
 install: all
@@ -15,6 +15,10 @@ oa2proto: cmd/oa2proto/oa2proto.go
 	cd cmd/$@ && go build -o ${BIN}/$@${EXT}
 
 oatoolgen: cmd/oatoolgen/oatoolgen.go
+	cd cmd/$@ && go generate
+	cd cmd/$@ && go build -o ${BIN}/$@${EXT}
+
+objtoolgen: cmd/objtoolgen/objtool.go
 	cd cmd/$@ && go generate
 	cd cmd/$@ && go build -o ${BIN}/$@${EXT}
 

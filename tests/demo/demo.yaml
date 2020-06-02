@@ -44,7 +44,7 @@ components:
           type: string
         def:
           type: object
-          x-properties-order: [member1, member2, member3]
+          x-properties-order: [member1, member2, member3, accessPoint]
           properties:
             member1:
               type: string

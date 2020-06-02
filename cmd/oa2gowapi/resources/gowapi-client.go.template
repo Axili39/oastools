@@ -10,7 +10,7 @@ import(
 {{- range $val := .WSHandlers }}
 type {{$val.Name}}ClientOps interface {
     {{- range $op := $val.ClientInterface.Ops}}
-	op{{$op.Name}}(*{{$op.PbMessageName}})
+	{{$op.Name}}(*{{$op.PbMessageName}})
     {{- end }}
 }
 
@@ -26,7 +26,7 @@ func (p *{{$val.Name}}ServerPeer) OnRecvMessage(message []byte) error {
 	switch operation.Select.(type) {
     {{- range $op := $val.ClientInterface.Ops}}    
 	case *{{$val.ClientInterface.ContainerMessage}}_{{$op.PbMessageName}}Value:
-		p.ops.op{{$op.Name}}(operation.Get{{$op.PbMessageName}}Value())
+		p.ops.{{$op.Name}}(operation.Get{{$op.PbMessageName}}Value())
     {{- end }}
 	default:
 		log.Printf(" unrecognized %v, discarderd\n", operation)

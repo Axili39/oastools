@@ -30,7 +30,7 @@ func RegisterPaths(router *gowapi.RouteServer, s Server) {
 {{- range $val := .WSHandlers }}
 type {{$val.Name}}ServerOps interface {
     {{- range $op := $val.ServerInterface.Ops}}
-	op{{$op.Name}}(*{{$op.PbMessageName}})
+	{{$op.Name}}(*{{$op.PbMessageName}})
     {{- end }}
 }
 
@@ -50,7 +50,7 @@ func (p *{{$val.Name}}ClientPeer) OnRecvMessage(message []byte) error {
 	switch operation.Select.(type) {
     {{- range $op := $val.ServerInterface.Ops}}    
 	case *{{$val.ServerInterface.ContainerMessage}}_{{$op.PbMessageName}}Value:
-		p.ops.op{{$op.Name}}(operation.Get{{$op.PbMessageName}}Value())
+		p.ops.{{$op.Name}}(operation.Get{{$op.PbMessageName}}Value())
     {{- end }}
 	default:
 		log.Printf(" unrecognized %v, discarderd\n", operation)
