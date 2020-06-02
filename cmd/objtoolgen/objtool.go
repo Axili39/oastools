@@ -1,4 +1,3 @@
-//go:install go generate
 //go:generate res2go -package main -prefix Rsrc -o resources.go resources/*.template
 package main
 
