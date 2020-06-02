@@ -197,6 +197,7 @@ type Operation struct {
 	Deprecated   bool                `yaml:"deprecated,omitempty"`
 	Security     []SecurityReq       `yaml:"security,omitempty"`
 	Servers      []Server            `yaml:"servers,omitempty"`
+	XWsRPC		 string				 `yaml:"x-ws-rpc,omitempty"`	// x-ws-rpc Link to Service WebSocket Open Operation
 }
 
 /*ExternalDocs from OAS

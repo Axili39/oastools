@@ -9,7 +9,7 @@ type XwsRpcOperation struct {
 type XwsRpcService struct {
 	Server struct {
 		Name string		`yaml:"name"`
-		OpenPath string	`yaml:"openPath"`
+		OpenPath string	`yaml:"openPath"` //deprecated
 		Interface []XwsRpcOperation	`yaml:"interface,omitempty"`
 	}	`yaml:"server"`
 	Client struct {
