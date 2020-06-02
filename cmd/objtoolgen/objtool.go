@@ -1,8 +1,6 @@
-//go:generate res2go -package resources -o resources/resources.go resources/*.template
+//go:generate res2go -package main -prefix Rsrc -o resources.go resources/*.template
 package main
 
-// TODO : supports -r root node preselection
-// TODO : supports -output package
 // TODO : directly generate binary
 // TODO : supports command name choice
 import (
@@ -14,7 +12,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/Axili39/oastools/cmd/objtoolgen/resources"
 	"github.com/Axili39/oastools/oasmodel"
 	"github.com/Axili39/oastools/protobuf"
 )
@@ -25,7 +22,7 @@ type genCtx struct {
 }
 
 func (g *genCtx) generate(wr *os.File) error {
-	fileTemplate := template.Must(template.New("").Parse(string(resources.Files["resources/objtool.go.template"])))
+	fileTemplate := template.Must(template.New("").Parse(string(RsrcFiles["resources/objtool.go.template"])))
 	
 	err := fileTemplate.Execute(wr,g)
 	if err != nil {
@@ -42,7 +39,7 @@ func main() {
 	var outputfile = flag.String("o", "", "output filename")
 
 	flag.Parse()
-	resources.Init()
+	RsrcInit()
 
 	// Some Checks
 	if *file == "" {
