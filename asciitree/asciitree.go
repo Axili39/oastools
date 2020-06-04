@@ -2,51 +2,51 @@ package asciitree
 
 import (
 	"fmt"
-	"os"
 	"io"
+	"os"
 	"sort"
 
 	"github.com/Axili39/oastools/oasmodel"
 )
 
-
 //ProtoType Field Type protocol buffer interface
 type ProtoType interface {
 	Tree(w io.Writer, name string, desc string, indent string, flag int)
 }
+
 const (
-	S_ARRAY      	= "[ ] "
-	S_OBJECT		= "{ } "
-	S_MAP			= "M<s>"
-	S_INT			= "int "
-	S_BOOL			= "bool"
-	S_STRING		= "str "
-	S_ENUM			= "enum"
+	AscTypeArray  = "[ ] "
+	AscTypeObject = "{ } "
+	AscTypeMap    = "M<s>"
+	AscTypeInt    = "int "
+	AscTypeBool   = "bool"
+	AscTypeString = "str "
+	AscTypeEnum   = "enum"
 )
 const (
-	FLAG_FIRST int = iota
-	FLAG_MIDDLE
-	FLAG_LAST
+	FlagFirst int = iota
+	FlagMiddle
+	FlagLast
 )
+
 func DrawLine(w io.Writer, symbol string, name string, desc string, indent string, flag int) string {
-	if flag == FLAG_FIRST {
-		fmt.Fprintf(w, "%-40s\t\t# %-40s\n", fmt.Sprintf("%s%s ── %s", indent, symbol, name), desc);
+	if flag == FlagFirst {
+		fmt.Fprintf(w, "%-40s\t\t# %-40s\n", fmt.Sprintf("%s%s ── %s", indent, symbol, name), desc)
 		return indent
 	}
-	if flag == FLAG_LAST {
-		fmt.Fprintf(w, "%-40s\t\t# %-40s\n", fmt.Sprintf("%s└── %s ── %s", indent, symbol, name), desc);
+	if flag == FlagLast {
+		fmt.Fprintf(w, "%-40s\t\t# %-40s\n", fmt.Sprintf("%s└── %s ── %s", indent, symbol, name), desc)
 		return indent + "    "
-	} 
+	}
 
-	fmt.Fprintf(w, "%-40s\t\t# %-40s\n", fmt.Sprintf("%s├── %s ── %s", indent, symbol, name), desc);
+	fmt.Fprintf(w, "%-40s\t\t# %-40s\n", fmt.Sprintf("%s├── %s ── %s", indent, symbol, name), desc)
 	return indent + "│   "
-	
-}
 
+}
 
 //TypeRef simple type or reference (by-name)
 type TypeName struct {
-	name    string
+	name string
 }
 
 //Tree : ProtoType interface realization
@@ -60,7 +60,7 @@ type Enum struct {
 }
 
 func (t *Enum) Tree(w io.Writer, name string, desc string, indent string, flag int) {
-	DrawLine(w, S_ENUM, name, desc, indent, flag)
+	DrawLine(w, AscTypeEnum, name, desc, indent, flag)
 }
 
 //Map object, used to represents AdditionalProperties
@@ -71,9 +71,10 @@ type Map struct {
 
 //Tree : ProtoType interface realization
 func (t *Map) Tree(w io.Writer, name string, desc string, indent string, flag int) {
-	newindent := DrawLine(w, S_MAP, name, desc,  indent, flag)
-	t.value.Tree(w, "", desc, newindent, FLAG_LAST)
+	newindent := DrawLine(w, AscTypeMap, name, desc, indent, flag)
+	t.value.Tree(w, "", desc, newindent, FlagLast)
 }
+
 // Array : array of Prototype
 type Array struct {
 	typedecl ProtoType
@@ -81,8 +82,8 @@ type Array struct {
 
 //Tree : ProtoType interface realization
 func (t *Array) Tree(w io.Writer, name string, desc string, indent string, flag int) {
-	newindent := DrawLine(w, S_ARRAY, name, desc, indent, flag)
-	t.typedecl.Tree(w, "[i]", "", newindent,  FLAG_LAST)
+	newindent := DrawLine(w, AscTypeArray, name, desc, indent, flag)
+	t.typedecl.Tree(w, "[i]", "", newindent, FlagLast)
 }
 
 // MESSAGE
@@ -92,7 +93,7 @@ type ObjectMembers struct {
 	//repeated bool
 	typedecl ProtoType
 	name     string
-	desc	 string
+	desc     string
 }
 
 //Tree : Message Member declaration
@@ -102,29 +103,26 @@ func (t *ObjectMembers) Tree(w io.Writer, indent string, flag int) {
 
 //Object structure
 type Object struct {
-	body   []ObjectMembers // Message Fields
+	body []ObjectMembers // Message Fields
 }
 
 //Tree : ProtoType interface realization
 func (t *Object) Tree(w io.Writer, name string, desc string, indent string, flag int) {
-	newindent := DrawLine(w, S_OBJECT, name, desc, indent, flag)
+	newindent := DrawLine(w, AscTypeObject, name, desc, indent, flag)
 	sort.Slice(t.body, func(i, j int) bool {
 		return t.body[i].name < t.body[j].name
 	})
 	for m := range t.body {
-		flag = FLAG_MIDDLE
+		flag = FlagMiddle
 		if m == len(t.body)-1 {
-			flag = FLAG_LAST
+			flag = FlagLast
 		}
-		t.body[m].Tree(w, newindent,  flag)
+		t.body[m].Tree(w, newindent, flag)
 	}
 }
 
-
-
 //CreateType : convert OAS Schema to internal ProtoType
 func CreateType(schema *oasmodel.Schema) ProtoType {
-
 	if schema.AllOf != nil {
 		node := Object{nil}
 		// parse all allOf members
@@ -132,11 +130,10 @@ func CreateType(schema *oasmodel.Schema) ProtoType {
 			current := schema.AllOf[i].Schema()
 			for m := range current.Properties {
 				prop := current.Properties[m].Schema()
-				f := ObjectMembers{CreateType(prop), m, prop.Description} 
+				f := ObjectMembers{CreateType(prop), m, prop.Description}
 				node.body = append(node.body, f)
 			}
 		}
-
 		return &node
 	}
 
@@ -152,13 +149,11 @@ func CreateType(schema *oasmodel.Schema) ProtoType {
 	}
 
 	if schema.Type == "object" {
-
 		// otherwise
 		node := Object{nil}
-
 		for m := range schema.Properties {
 			prop := schema.Properties[m].Schema()
-			f := ObjectMembers{CreateType(prop), m, prop.Description} 
+			f := ObjectMembers{CreateType(prop), m, prop.Description}
 			node.body = append(node.body, f)
 		}
 		return &node
@@ -166,18 +161,15 @@ func CreateType(schema *oasmodel.Schema) ProtoType {
 
 	if schema.Type == "array" {
 		t := CreateType(schema.Items.Schema())
-		node := Array{t}
-		return &node
+		return &Array{t}
 	}
 
 	if schema.Type == "boolean" {
-		node := TypeName{S_BOOL}
-		return &node
+		return &TypeName{AscTypeBool}
 	}
 
 	if schema.Type == "integer" {
-		node := TypeName{S_INT}
-		return &node
+		return &TypeName{AscTypeInt}
 	}
 
 	// Enums
@@ -188,18 +180,17 @@ func CreateType(schema *oasmodel.Schema) ProtoType {
 		}
 		return &node
 	}
-	node := TypeName{S_STRING}
-	return &node
+	return &TypeName{AscTypeString}
 }
 
 //Components2Proto : generate proto file from Parsed OpenAPI definition
 func Components2AscTree(oa *oasmodel.OpenAPI, f io.Writer, root string) {
 	oa.ResolveRefs()
 	// create first level Nodes
-	for k,v := range oa.Components.Schemas {
+	for k, v := range oa.Components.Schemas {
 		if k == root {
 			node := CreateType(v.Schema())
-			node.Tree(f, k, v.Schema().Description, "", FLAG_FIRST)
+			node.Tree(f, k, v.Schema().Description, "", FlagFirst)
 		}
 	}
 }

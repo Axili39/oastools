@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+
 	"github.com/Axili39/oastools/oasmodel"
 )
 
@@ -98,7 +99,7 @@ func (t *Enum) Declare(w *os.File, indent string) {
 		fmt.Fprintf(w, "%s\t%s = %d;\n", indent, t.values[i], values)
 		values++
 	}
-	fmt.Fprintf(w, "%s}\n",indent)
+	fmt.Fprintf(w, "%s}\n", indent)
 }
 
 //Name :  ProtoType interface realization
@@ -119,8 +120,8 @@ type Map struct {
 }
 
 //Declare : ProtoType interface realization
-func (t *Map) Declare(w *os.File , indent string) {
-	fmt.Fprintf(w, "map<%s, value>", t.key, t.value.Name())
+func (t *Map) Declare(w *os.File, indent string) {
+	fmt.Fprintf(w, "map<%s, %s>", t.key, t.value.Name())
 }
 
 //Name :  ProtoType interface realization
@@ -132,9 +133,10 @@ func (t *Map) Name() string {
 func (t *Map) Repeated() bool {
 	return false
 }
+
 // Array : array of Prototype
 type Oneof struct {
-	name string
+	name    string
 	members []MessageMembers
 }
 
@@ -146,7 +148,7 @@ func (t *Oneof) Declare(w *os.File, indent string) {
 	for m := range t.members {
 		t.members[m].Declare(w, indent+"\t\t")
 	}
-	fmt.Fprintf(w, "\t%s}\n%s}\n", indent,indent)
+	fmt.Fprintf(w, "\t%s}\n%s}\n", indent, indent)
 }
 
 //Name :  ProtoType interface realization
@@ -158,6 +160,7 @@ func (t *Oneof) Name() string {
 func (t *Oneof) Repeated() bool {
 	return false
 }
+
 // Array : array of Prototype
 type Array struct {
 	typedecl ProtoType
@@ -180,29 +183,29 @@ func (t *Array) Repeated() bool {
 }
 
 // MESSAGE
-
+/*
 //Option for message fields
 type Option struct {
 	name  string
 	value string
 }
-
+*/
 //MessageMembers Message Field definition
 type MessageMembers struct {
 	//repeated bool
 	typedecl ProtoType
 	name     string
 	number   int
-	Options  []Option
+	//	Options  []Option
 }
 
 //Declare : Message Member declaration
 func (t *MessageMembers) Declare(w *os.File, indent string) {
-	fmt.Fprintf(w,"%s", indent)
+	fmt.Fprintf(w, "%s", indent)
 	// repeated
 	if t.typedecl.Repeated() {
 		fmt.Fprintf(w, "repeated ")
-	} 
+	}
 	// field decl
 	fmt.Fprintf(w, "%s %s = %d;", t.typedecl.Name(), t.name, t.number)
 	// TODO : options
@@ -226,7 +229,7 @@ func (t *Message) Declare(w *os.File, indent string) {
 	fmt.Fprintf(w, "%smessage %s {\n", indent, t.name)
 	// nested
 	for n := range t.nested {
-		t.nested[n].Declare(w, indent + "\t")
+		t.nested[n].Declare(w, indent+"\t")
 	}
 	// body
 	for m := range t.body {
@@ -245,126 +248,149 @@ func (t *Message) Repeated() bool {
 	return false
 }
 
-//CreateType : convert OAS Schema to internal ProtoType
-func CreateType(name string, schema *oasmodel.SchemaOrRef, Parent *Message) ProtoType {
-	if schema.Ref != nil {
-		node := TypeName{schema.Ref.RefName, ""}
-		return &node
-	}
-	if schema.Val.OneOf != nil {
-		node := Oneof{name, nil}
-		num := 0
-		for i := range schema.Val.OneOf {
-			num++
-			prop := schema.Val.OneOf[i]
-			t := CreateType("YYY", prop, Parent)
-			f := MessageMembers{t, t.Name() + "Value", num, nil}			
-			node.members = append(node.members, f)
+func createOneOf(name string, oneof []*oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
+	node := Oneof{name, nil}
+	num := 0
+	for _, prop := range oneof {
+		num++
+		t, err := CreateType("YYY", prop, parent)
+		if err != nil {
+			return nil, err
 		}
-		return &node
+		f := MessageMembers{t, t.Name() + "Value", num}
+		node.members = append(node.members, f)
 	}
-	if schema.Val.AllOf != nil {
-		node := Message{name, nil, nil}
-		num := 0
-		// parse all allOf members
-		for i := range schema.Val.AllOf {
-			current := schema.Val.AllOf[i].Schema()
-			var keys[]string
-			if len(current.XPropertiesOrder) > 0 {
-				keys = current.XPropertiesOrder
-			} else {
-				keys = keysorder(current.Properties)
-			}
-			for i := range keys {
-				m := keys[i]
-				num++
-				f := MessageMembers{nil, m, num, nil}
-				prop := current.Properties[m]
-				t := CreateType(name+"_"+m, prop, &node)
-				f.typedecl = t
-				node.body = append(node.body, f)
-			}
-		}
-		return &node
-	}
+	return &node, nil
+}
 
-	// Case AdditionnalProperties
-	if schema.Val.AdditionalProperties != nil {
-		// MUST be type object
-		if schema.Val.Type != "object" {
-			fmt.Fprintf(os.Stderr, "Schema %s with Additional Properties MUST be an object\n", name)
-		}
-		objType := CreateType(name+"Elem", schema.Val.AdditionalProperties.Schema, Parent)
-		node := Map{name, "string", objType}
-		return &node
-	}
-
-	if schema.Val.Type == "object" {
-
-		// otherwise
-		node := Message{name, nil, nil}
-		// parse elements
-		num := 0
+func createAllOf(name string, allOf []*oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
+	node := Message{name, nil, nil}
+	num := 0
+	// parse all allOf members
+	for _, val := range allOf {
+		current := val.Schema()
 		var keys []string
-		if len(schema.Val.XPropertiesOrder) > 0 {
-			keys = schema.Val.XPropertiesOrder
+		if len(current.XPropertiesOrder) > 0 {
+			keys = current.XPropertiesOrder
 		} else {
-			keys = keysorder(schema.Val.Properties)
+			keys = keysorder(current.Properties)
 		}
 		for i := range keys {
 			m := keys[i]
 			num++
-			f := MessageMembers{nil, m, num, nil}
-			prop := schema.Val.Properties[m]
-			t := CreateType(name+"_"+m, prop, &node)
+			f := MessageMembers{nil, m, num}
+			prop := current.Properties[m]
+			t, err := CreateType(name+"_"+m, prop, &node)
+			if err != nil {
+				return nil, err
+			}
 			f.typedecl = t
 			node.body = append(node.body, f)
 		}
-		if Parent != nil {
-			Parent.nested = append(Parent.nested, &node)
+	}
+	return &node, nil
+}
+
+func createObject(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
+	// otherwise
+	node := Message{name, nil, nil}
+	// parse elements
+	num := 0
+	var keys []string
+	if len(schema.XPropertiesOrder) > 0 {
+		keys = schema.XPropertiesOrder
+	} else {
+		keys = keysorder(schema.Properties)
+	}
+	for i := range keys {
+		m := keys[i]
+		num++
+		f := MessageMembers{nil, m, num}
+		prop := schema.Properties[m]
+		t, err := CreateType(name+"_"+m, prop, &node)
+		if err != nil {
+			return nil, err
 		}
-		return &node
+		f.typedecl = t
+		node.body = append(node.body, f)
+	}
+	if parent != nil {
+		parent.nested = append(parent.nested, &node)
+	}
+	return &node, nil
+}
+
+func createAdditionnalProperties(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
+	if schema.Type != "object" {
+		return nil, fmt.Errorf("Schema %s with Additional Properties must be an object", name)
+	}
+	objType, err := CreateType(name+"Elem", schema.AdditionalProperties.Schema, parent)
+	if err != nil {
+		return nil, err
+	}
+	node := Map{name, "string", objType}
+	return &node, nil
+}
+
+//CreateType : convert OAS Schema to internal ProtoType
+func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
+	if schemaOrRef.Ref != nil {
+		return &TypeName{schemaOrRef.Ref.RefName, ""}, nil
+	}
+	schema := schemaOrRef.Schema()
+	if schema.OneOf != nil {
+		return createOneOf(name, schema.OneOf, parent)
+	}
+	if schema.AllOf != nil {
+		return createAllOf(name, schema.AllOf, parent)
 	}
 
-	if schema.Val.Type == "array" {
-		t := CreateType(name+"Elem", schema.Val.Items, Parent)
-		node := Array{t}
-		return &node
+	// Case AdditionnalProperties
+	if schema.AdditionalProperties != nil {
+		return createAdditionnalProperties(name, schema, parent)
 	}
 
-	if schema.Val.Type == "boolean" {
-		node := TypeName{"bool", ""}
-		return &node
+	if schema.Type == "object" {
+		return createObject(name, schema, parent)
 	}
 
-	if schema.Val.Type == "integer" {
-		node := TypeName{"int32", ""}
-		return &node
+	if schema.Type == "array" {
+		t, err := CreateType(name+"Elem", schema.Items, parent)
+		if err != nil {
+			return nil, err
+		}
+		return &Array{t}, nil
+	}
+
+	if schema.Type == "boolean" {
+		return &TypeName{"bool", ""}, nil
+	}
+
+	if schema.Type == "integer" {
+		return &TypeName{"int32", ""}, nil
 	}
 
 	// Enums
-	if schema.Val.Type == "string" && len(schema.Val.Enum) > 0 {
+	if schema.Type == "string" && len(schema.Enum) > 0 {
 		node := Enum{name, nil}
-		for i := range schema.Val.Enum {
-			node.values = append(node.values, schema.Val.Enum[i])
+		for i := range schema.Enum {
+			node.values = append(node.values, schema.Enum[i])
 		}
-		if Parent != nil {
-			Parent.nested = append(Parent.nested, &node)
+		if parent != nil {
+			parent.nested = append(parent.nested, &node)
 		}
-		return &node
+		return &node, nil
 	}
 
 	// bytes
-	if schema.Val.Type == "string" && schema.Val.Format == "binary" {
-		node := TypeName{"bytes", ""}
-		return &node
+	if schema.Type == "string" && schema.Format == "binary" {
+		return &TypeName{"bytes", ""}, nil
 	}
 
-	node := TypeName{schema.Val.Type, ""}
-	return &node
+	return &TypeName{schema.Type, ""}, nil
 }
 
-func keysorder(m map[string]*oasmodel.SchemaOrRef) ([]string) {
+func keysorder(m map[string]*oasmodel.SchemaOrRef) []string {
 	keys := make([]string, len(m))
 	i := 0
 	for k := range m {
@@ -376,14 +402,17 @@ func keysorder(m map[string]*oasmodel.SchemaOrRef) ([]string) {
 }
 
 //Components2Proto : generate proto file from Parsed OpenAPI definition
-func Components2Proto(oa *oasmodel.OpenAPI, f *os.File, packageName string) {
+func Components2Proto(oa *oasmodel.OpenAPI, f *os.File, packageName string) error {
 	oa.ResolveRefs()
 	nodeList := make([]ProtoType, 0, 10)
 	// create first level Nodes
-	for _,k := range keysorder(oa.Components.Schemas) {
-			v := oa.Components.Schemas[k]
-			node := CreateType(k, v, nil)
-			nodeList = append(nodeList, node)
+	for _, k := range keysorder(oa.Components.Schemas) {
+		v := oa.Components.Schemas[k]
+		node, err := CreateType(k, v, nil)
+		if err != nil {
+			return err
+		}
+		nodeList = append(nodeList, node)
 	}
 
 	fmt.Fprintf(f, "syntax = \"proto3\";\n")
@@ -393,4 +422,5 @@ func Components2Proto(oa *oasmodel.OpenAPI, f *os.File, packageName string) {
 	for n := range nodeList {
 		nodeList[n].Declare(f, "")
 	}
+	return nil
 }

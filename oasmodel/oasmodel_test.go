@@ -1,16 +1,15 @@
-package oasmodel_test
+package oasmodel
 
 import (
 	"io/ioutil"
 	"os"
 	"testing"
 
-	"../../pkg/oasmodel"
 	"gopkg.in/yaml.v3"
 )
 
 func check(data string, t *testing.T) {
-	var oa oasmodel.OpenAPI
+	var oa OpenAPI
 	err := yaml.Unmarshal([]byte(data), &oa)
 	if err != nil {
 		t.Errorf("error unmarshalling : %v", err)
@@ -25,9 +24,12 @@ func check(data string, t *testing.T) {
 		t.Errorf("UnMarshal -> MArshal differs :\n%s\n\n", buf)
 		// Helper : save the file
 
-		ioutil.WriteFile("/tmp/dat1.yaml", buf, 0644)
+		err := ioutil.WriteFile("/tmp/dat1.yaml", buf, 0644)
+		if err != nil {
+			t.Errorf("error saving tmp file : %v \n", err)
+		}
+
 	}
-	
 
 }
 func TestResponseWithRef(t *testing.T) {
@@ -75,7 +77,7 @@ func TestAssets(t *testing.T) {
 	}
 	for i := range files {
 		if !files[i].IsDir() {
-			t.Logf("Checking : %s",files[i].Name())
+			t.Logf("Checking : %s", files[i].Name())
 			yamlFile, err := ioutil.ReadFile(root + files[i].Name())
 			if err != nil {
 				t.Errorf("error loading assets : %s", files[i].Name())

@@ -1,17 +1,18 @@
 package main
 
 import (
-	"github.com/Axili39/oastools/protobuf"
-	"github.com/Axili39/oastools/oasmodel"
 	"flag"
-	"os"
 	"fmt"
+	"os"
+
+	"github.com/Axili39/oastools/oasmodel"
+	"github.com/Axili39/oastools/protobuf"
 )
 
 func main() {
 	file := flag.String("f", "test.yaml", "yaml file to parse")
 	out := flag.String("o", "", "output file")
-	packageName := flag.String("p","", "package name")
+	packageName := flag.String("p", "", "package name")
 	flag.Parse()
 
 	var output *os.File
@@ -26,8 +27,16 @@ func main() {
 	} else {
 		output = os.Stdout
 	}
-    
+
 	oa := oasmodel.OpenAPI{}
-	oa.Load(*file)
-	protobuf.Components2Proto(&oa, output, *packageName)
+	err := oa.Load(*file)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error loading %s : %v", *file, err)
+		os.Exit(1)
+	}
+	err = protobuf.Components2Proto(&oa, output, *packageName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error parsing %s : %v", *file, err)
+		os.Exit(1)
+	}
 }
