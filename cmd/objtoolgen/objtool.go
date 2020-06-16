@@ -1,8 +1,6 @@
 //go:generate res2go -package main -prefix Rsrc -o resources.go resources/*.template
 package main
 
-// TODO : directly generate binary
-// TODO : supports command name choice
 // TODO : embed schema
 // TODO : add option in generated tool to dump schema
 
