@@ -402,7 +402,7 @@ func keysorder(m map[string]*oasmodel.SchemaOrRef) []string {
 }
 
 //Components2Proto : generate proto file from Parsed OpenAPI definition
-func Components2Proto(oa *oasmodel.OpenAPI, f *os.File, packageName string) error {
+func Components2Proto(oa *oasmodel.OpenAPI, f *os.File, packageName string, options ...string) error {
 	oa.ResolveRefs()
 	nodeList := make([]ProtoType, 0, 10)
 	// create first level Nodes
@@ -417,7 +417,11 @@ func Components2Proto(oa *oasmodel.OpenAPI, f *os.File, packageName string) erro
 
 	fmt.Fprintf(f, "syntax = \"proto3\";\n")
 	if packageName != "" {
-		fmt.Fprintf(f, "option go_package = \"%s\";\n", packageName)
+		fmt.Fprintln(f, "package ", packageName, ";")
+		//fmt.Fprintf(f, "option go_package = \".;%s\";\n", packageName)
+	}
+	for _, opt := range options {
+		fmt.Fprintln(f, "option ", opt, ";")
 	}
 	for n := range nodeList {
 		nodeList[n].Declare(f, "")

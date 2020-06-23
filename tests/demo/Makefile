@@ -1,5 +1,5 @@
 demoTool:
-	PATH=${PATH}:~/go/bin ../../bin/objtoolgen -f demo.yaml -c A --build -o demo
+	PATH=${PATH}:~/go/bin objtoolgen -f demo.yaml -c A --build -o demo
 	cp demo/demo ./demoTool
 test: demoTool
 	./test.sh

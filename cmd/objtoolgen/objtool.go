@@ -58,15 +58,15 @@ func genProto(file string, protofilename string, component string) {
 		os.Exit(1)
 	}
 
-	err = protobuf.Components2Proto(&oa, w, "main")
+	err = protobuf.Components2Proto(&oa, w, "foo.bar", "go_package=\".;main\"")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error parsing %s : %v", file, err)
 		os.Exit(1)
 	}
 }
 
-func compileProto(protofilename string) {
-	cmd := exec.Command("protoc", "--go_out=.", protofilename)
+func compileProto(protofilename string, directory string) {
+	cmd := exec.Command("protoc", "--go_out="+directory, protofilename)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = os.Stdout
@@ -145,7 +145,7 @@ func main() {
 	genProto(*file, protofilename, *component)
 
 	// Step 2: Generate package with protoc
-	compileProto(protofilename)
+	compileProto(protofilename, output)
 
 	// Step 3: Generate filetoolcmd for package
 	genCfgTool(output, *component)
