@@ -21,6 +21,7 @@ type MessageMembers struct {
 	typedecl ProtoType
 	name     string
 	number   int
+	repeated bool
 	//	Options  []Option
 }
 
@@ -28,7 +29,7 @@ type MessageMembers struct {
 func (t *MessageMembers) Declare(w io.Writer, indent string) {
 	fmt.Fprintf(w, "%s", indent)
 	// repeated
-	if t.typedecl.Repeated() {
+	if t.repeated {
 		fmt.Fprintf(w, "repeated ")
 	}
 	// field decl
@@ -68,8 +69,10 @@ func (t *Message) Name() string {
 	return t.name
 }
 
-//Repeated : ProtoType interface realization
-func (t *Message) Repeated() bool {
+func isRepeated(schema *oasmodel.SchemaOrRef) bool {
+	if schema.Schema().Type == "array" {
+		return true
+	}
 	return false
 }
 
@@ -89,8 +92,8 @@ func createMessage(name string, schema *oasmodel.Schema, parent *Message) (Proto
 	// Add each Properties as message Member
 	for _, m := range keys {
 		num++
-		f := MessageMembers{nil, m, num}
 		prop := schema.Properties[m]
+		f := MessageMembers{nil, m, num, isRepeated(prop)}
 		f.typedecl, err = CreateType(name+"_"+m, prop, &node)
 		if err != nil {
 			return nil, err
@@ -100,6 +103,71 @@ func createMessage(name string, schema *oasmodel.Schema, parent *Message) (Proto
 	// if has parent insert as nested message
 	if parent != nil {
 		parent.nested = append(parent.nested, &node)
+	}
+	return &node, nil
+}
+
+// Array : array of Prototype
+type Oneof struct {
+	name    string
+	members []MessageMembers
+}
+
+//Declare : ProtoType interface realization
+func (t *Oneof) Declare(w io.Writer, indent string) {
+	fmt.Fprintf(w, "%smessage %s {\n", indent, t.name)
+	fmt.Fprintf(w, "%s\toneof select {\n", indent)
+	// body
+	for m := range t.members {
+		t.members[m].Declare(w, indent+"\t\t")
+	}
+	fmt.Fprintf(w, "\t%s}\n%s}\n", indent, indent)
+}
+
+//Name :  ProtoType interface realization
+func (t *Oneof) Name() string {
+	return t.name
+}
+
+func createOneOf(name string, oneof []*oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
+	node := Oneof{name, nil}
+	num := 0
+	for _, prop := range oneof {
+		num++
+		t, err := CreateType("YYY", prop, parent)
+		if err != nil {
+			return nil, err
+		}
+		f := MessageMembers{t, t.Name() + "Value", num, isRepeated(prop)}
+		node.members = append(node.members, f)
+	}
+	return &node, nil
+}
+
+func createAllOf(name string, allOf []*oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
+	node := Message{name, nil, nil}
+	num := 0
+
+	// parse all allOf members
+	for _, val := range allOf {
+		current := val.Schema()
+		var keys []string
+		if len(current.XPropertiesOrder) > 0 {
+			keys = current.XPropertiesOrder
+		} else {
+			keys = keysorder(current.Properties)
+		}
+		for _, m := range keys {
+			num++
+			prop := current.Properties[m]
+			f := MessageMembers{nil, m, num, isRepeated(prop)}
+			t, err := CreateType(name+"_"+m, prop, &node)
+			if err != nil {
+				return nil, err
+			}
+			f.typedecl = t
+			node.body = append(node.body, f)
+		}
 	}
 	return &node, nil
 }

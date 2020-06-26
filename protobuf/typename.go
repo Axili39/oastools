@@ -19,11 +19,6 @@ func (t *TypeName) Name() string {
 	return t.name
 }
 
-//Repeated ProtoType interface realization
-func (t *TypeName) Repeated() bool {
-	return false
-}
-
 // Basic Types
 // OAS specify format for type :
 // Type		Format	Description

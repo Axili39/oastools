@@ -12,7 +12,6 @@ import (
 type ProtoType interface {
 	Declare(w io.Writer, indent string)
 	Name() string
-	Repeated() bool
 }
 
 //Map object, used to represents AdditionalProperties
@@ -24,109 +23,11 @@ type Map struct {
 
 //Declare : ProtoType interface realization
 func (t *Map) Declare(w io.Writer, indent string) {
-	//log.Println("called MAP.Declare()")
-	//fmt.Fprintf(w, "map<%s, %s>", t.key, t.value.Name())
 }
 
 //Name :  ProtoType interface realization
 func (t *Map) Name() string {
 	return "map<" + t.key + ", " + t.value.Name() + ">"
-}
-
-//Repeated :  ProtoType interface realization
-func (t *Map) Repeated() bool {
-	return false
-}
-
-// Array : array of Prototype
-type Oneof struct {
-	name    string
-	members []MessageMembers
-}
-
-//Declare : ProtoType interface realization
-func (t *Oneof) Declare(w io.Writer, indent string) {
-	fmt.Fprintf(w, "%smessage %s {\n", indent, t.name)
-	fmt.Fprintf(w, "%s\toneof select {\n", indent)
-	// body
-	for m := range t.members {
-		t.members[m].Declare(w, indent+"\t\t")
-	}
-	fmt.Fprintf(w, "\t%s}\n%s}\n", indent, indent)
-}
-
-//Name :  ProtoType interface realization
-func (t *Oneof) Name() string {
-	return t.name
-}
-
-//Repeated :  ProtoType interface realization
-func (t *Oneof) Repeated() bool {
-	return false
-}
-
-// Array : array of Prototype
-type Array struct {
-	typedecl ProtoType
-}
-
-//Declare : ProtoType interface realization
-func (t *Array) Declare(w io.Writer, indent string) {
-	// does't exist in protobuf
-	t.typedecl.Declare(w, indent)
-}
-
-//Name :  ProtoType interface realization
-func (t *Array) Name() string {
-	return t.typedecl.Name()
-}
-
-//Repeated :  ProtoType interface realization
-func (t *Array) Repeated() bool {
-	return true
-}
-
-func createOneOf(name string, oneof []*oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
-	node := Oneof{name, nil}
-	num := 0
-	for _, prop := range oneof {
-		num++
-		t, err := CreateType("YYY", prop, parent)
-		if err != nil {
-			return nil, err
-		}
-		f := MessageMembers{t, t.Name() + "Value", num}
-		node.members = append(node.members, f)
-	}
-	return &node, nil
-}
-
-func createAllOf(name string, allOf []*oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
-	node := Message{name, nil, nil}
-	num := 0
-
-	// parse all allOf members
-	for _, val := range allOf {
-		current := val.Schema()
-		var keys []string
-		if len(current.XPropertiesOrder) > 0 {
-			keys = current.XPropertiesOrder
-		} else {
-			keys = keysorder(current.Properties)
-		}
-		for _, m := range keys {
-			num++
-			f := MessageMembers{nil, m, num}
-			prop := current.Properties[m]
-			t, err := CreateType(name+"_"+m, prop, &node)
-			if err != nil {
-				return nil, err
-			}
-			f.typedecl = t
-			node.body = append(node.body, f)
-		}
-	}
-	return &node, nil
 }
 
 func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
@@ -153,36 +54,26 @@ func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message)
 			return createTypename(schemaOrRef.Ref.RefName, "")
 		}
 	}
-
 	// case Oneof
 	if schema.OneOf != nil {
 		return createOneOf(name, schema.OneOf, parent)
 	}
-
 	// case AllOf
 	if schema.AllOf != nil {
 		return createAllOf(name, schema.AllOf, parent)
 	}
-
 	// Case AdditionalProperties
 	if schema.AdditionalProperties != nil {
 		return createAdditionalProperties(name, schema, parent)
 	}
-
 	// case Object
 	if schema.Type == "object" {
 		return createMessage(name, schema, parent)
 	}
-
 	// case Array
 	if schema.Type == "array" {
-		t, err := CreateType(name+"Elem", schema.Items, parent)
-		if err != nil {
-			return nil, err
-		}
-		return &Array{t}, nil
+		return CreateType(name, schema.Items, parent)
 	}
-
 	// Enums
 	if schema.Type == "string" && len(schema.Enum) > 0 {
 		return createEnum(name, schema, parent)
@@ -220,7 +111,6 @@ func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, opt
 	fmt.Fprintf(f, "syntax = \"proto3\";\n")
 	if packageName != "" {
 		fmt.Fprintln(f, "package ", packageName, ";")
-		//fmt.Fprintf(f, "option go_package = \".;%s\";\n", packageName)
 	}
 	for _, opt := range options {
 		fmt.Fprintln(f, "option ", opt, ";")

@@ -40,11 +40,6 @@ func (t *Enum) Name() string {
 	return t.name
 }
 
-//Repeated :ProtoType interface realization
-func (t *Enum) Repeated() bool {
-	return false
-}
-
 func createEnum(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
 	// Enums
 	if schema.Type == "string" && len(schema.Enum) > 0 {

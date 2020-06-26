@@ -1,0 +1,35 @@
+syntax = "proto3";
+package  foo.bar ;
+option  go_package=".;main" ;
+message A {
+	message A_def {
+		message A_def_member3Elem {
+			string name = 1;
+			bool valid = 2;
+		}
+		string member1 = 1;
+		B member2 = 2;
+		repeated A_def_member3Elem member3 = 3;
+		repeated BindAddr accessPoint = 4;
+	}
+	A_def def = 1;
+	string abc = 2;
+}
+message B {
+	message B_def {
+		string member1 = 1;
+	}
+	repeated string ghi = 1;
+	string abc = 2;
+	B_def def = 3;
+}
+message BindAddr {
+	string addr = 1;
+	int32 port = 2;
+}
+message C {
+	oneof select {
+		B BValue = 1;
+		A AValue = 2;
+	}
+}
