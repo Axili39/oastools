@@ -1,5 +1,7 @@
 package main
 
+//go:generate ./mkversion.sh
+
 import (
 	"bytes"
 	"flag"
@@ -42,9 +44,15 @@ func main() {
 	file := flag.String("f", "test.yaml", "yaml file to parse")
 	out := flag.String("o", "", "output file")
 	packageName := flag.String("p", "", "package name eg: foo.bar")
+	showversion := flag.Bool("v", false, "show version")
 	var options stringList
 	flag.Var(&options, "option", "add directive option in .proto file")
 	flag.Parse()
+
+	if *showversion {
+		fmt.Println(version)
+		os.Exit(0)
+	}
 	log.SetFlags(0)
 	log.SetOutput(ioutil.Discard)
 	var output *os.File
