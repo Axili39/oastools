@@ -1,0 +1,18 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Lux API
+  license:
+    name: MIT
+servers:
+  - url: http://github.com/Axili39/lux
+paths:
+components:
+  schemas:
+    foo:
+      type: object
+      properties:
+        member1:
+          type: string
+        member2:
+          type: integer

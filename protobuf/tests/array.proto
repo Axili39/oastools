@@ -1,0 +1,9 @@
+syntax = "proto3";
+message bar {
+	repeated int32 data = 1;
+	string data2 = 2;
+}
+message bar2 {
+	repeated string vector1 = 1;
+	repeated bar vector2 = 2;
+}

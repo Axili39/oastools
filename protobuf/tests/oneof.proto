@@ -1,0 +1,7 @@
+syntax = "proto3";
+message foo {
+	oneof select {
+		string stringValue = 1;
+		int32 int32Value = 2;
+	}
+}

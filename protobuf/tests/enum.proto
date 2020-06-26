@@ -1,0 +1,15 @@
+syntax = "proto3";
+message foo {
+	enum foo_member1 {
+		foo = 0;
+		bar = 1;
+		lol = 2;
+	}
+	foo_member1 member1 = 1;
+	states member2 = 2;
+}
+enum states {
+	Val1 = 0;
+	Val2 = 1;
+	Val3 = 2;
+}

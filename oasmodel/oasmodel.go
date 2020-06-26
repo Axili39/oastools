@@ -344,7 +344,7 @@ func (e *CallbackOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		val := make(Callback)
 		err = unmarshal(&val)
 		if err != nil {
-			fmt.Println("error un marshalling CallbackOrRef")
+			fmt.Fprintln(os.Stderr, "error un marshalling CallbackOrRef")
 			return err
 		}
 		e.Val = &val
@@ -595,7 +595,7 @@ func (e *MediaTypeOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error 
 		val := MediaType{}
 		err = unmarshal(&val)
 		if err != nil {
-			fmt.Println("error un marshalling MediaTypeOrRef")
+			fmt.Fprintln(os.Stderr, "error un marshalling MediaTypeOrRef")
 			return err
 		}
 
@@ -623,7 +623,7 @@ func (e *ParameterOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error 
 		val := Parameter{}
 		err = unmarshal(&val)
 		if err != nil {
-			fmt.Println("error un marshalling CallbackOrRef")
+			fmt.Fprintln(os.Stderr, "error un marshalling CallbackOrRef")
 			return err
 		}
 		*e.Val = val
@@ -650,7 +650,7 @@ func (e *ResponseOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		val := Response{}
 		err = unmarshal(&val)
 		if err != nil {
-			fmt.Println("error un marshalling ResponseOrRef")
+			fmt.Fprintln(os.Stderr, "error un marshalling ResponseOrRef")
 			return err
 		}
 
@@ -678,7 +678,7 @@ func (s *SchemaOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		val := Schema{}
 		err = unmarshal(&val)
 		if err != nil {
-			fmt.Println("error un marshalling SchemaOrRef")
+			fmt.Fprintln(os.Stderr, "error un marshalling SchemaOrRef")
 			return err
 		}
 
@@ -707,7 +707,7 @@ func (e *AdditionalProperties) UnmarshalYAML(unmarshal func(interface{}) error) 
 		schema := SchemaOrRef{}
 		err = unmarshal(&schema)
 		if err != nil {
-			fmt.Println("error un marshalling schema")
+			fmt.Fprintln(os.Stderr, "error un marshalling schema")
 			return err
 		}
 		e.Schema = &schema
@@ -841,11 +841,11 @@ func (s *SchemaOrRef) resolveRefs(refIndex map[string]refIndexElement) {
 	}
 }
 func (s *SchemaOrRef) Schema() *Schema {
-	if s.Val != nil {
-		return s.Val
-	}
 	if s.Ref != nil && s.Ref.Resolved != nil {
 		return s.Ref.Resolved.(*SchemaOrRef).Schema()
+	}
+	if s.Val != nil {
+		return s.Val
 	}
 	log.Fatalf("unable to convert %s into valid schema", s.Ref.Ref)
 	return nil

@@ -12,7 +12,7 @@ components:
     C:
       oneOf:
         - $ref: "#/components/schemas/B"
-        - $ref: "#/components/schemas/C"
+        - $ref: "#/components/schemas/A"
     BindAddr:
       type: object
       x-properties-order: [addr, port]

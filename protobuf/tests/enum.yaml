@@ -1,0 +1,16 @@
+components:
+  schemas:
+    states:
+      type: string
+      enum:
+        - Val1
+        - Val2
+        - Val3
+    foo:
+      type: object
+      properties:
+        member1:
+          type: string
+          enum: [foo, bar, lol]
+        member2:
+          $ref: "#/components/schemas/states"

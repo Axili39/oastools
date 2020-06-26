@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 
@@ -43,7 +45,8 @@ func main() {
 	var options stringList
 	flag.Var(&options, "option", "add directive option in .proto file")
 	flag.Parse()
-
+	log.SetFlags(0)
+	log.SetOutput(ioutil.Discard)
 	var output *os.File
 	if *out != "" {
 		var err error

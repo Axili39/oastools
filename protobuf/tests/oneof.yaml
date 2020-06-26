@@ -1,0 +1,8 @@
+paths:
+components:
+  schemas:
+    foo:
+      oneOf:
+        - type: string
+        - type: integer
+          format: int32

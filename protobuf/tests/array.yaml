@@ -1,0 +1,25 @@
+paths:
+components:
+  schemas:
+    foo:
+      type: array
+      items:
+        type: integer
+    bar:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/foo"
+        data2:
+          type: string
+    bar2:
+      type: object
+      properties:
+        vector1:
+          type:  array
+          items:
+            type: string
+        vector2:
+          type: array
+          items:
+            $ref: "#/components/schemas/bar"

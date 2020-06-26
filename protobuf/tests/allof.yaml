@@ -1,0 +1,21 @@
+paths:
+components:
+  schemas:
+    bar:
+      type: object
+      properties:
+        m4: 
+          type: integer
+    foo:
+      allOf:
+        - type: object
+          properties:
+            m1:
+              type: string
+            m2:
+              type: int64
+        - type: object
+          properties:
+            m3:
+              type: integer
+        - $ref: "#/components/schemas/bar"

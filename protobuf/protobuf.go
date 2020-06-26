@@ -2,7 +2,7 @@ package protobuf
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"sort"
 
 	"github.com/Axili39/oastools/oasmodel"
@@ -48,19 +48,18 @@ message outer {
 
 //ProtoType Field Type protocol buffer interface
 type ProtoType interface {
-	Declare(w *os.File, indent string)
+	Declare(w io.Writer, indent string)
 	Name() string
 	Repeated() bool
 }
 
 //TypeName simple type or reference (by-name)
 type TypeName struct {
-	name    string
-	refName string //useless
+	name string
 }
 
 //Declare : ProtoType interface realization
-func (t *TypeName) Declare(w *os.File, indent string) {
+func (t *TypeName) Declare(w io.Writer, indent string) {
 	// does't exist in protobuf
 }
 
@@ -92,7 +91,7 @@ enum Corpus {
     VIDEO = 6;
   }
 */
-func (t *Enum) Declare(w *os.File, indent string) {
+func (t *Enum) Declare(w io.Writer, indent string) {
 	fmt.Fprintf(w, "%senum %s {\n", indent, t.name)
 	values := 0
 	for i := range t.values {
@@ -120,7 +119,7 @@ type Map struct {
 }
 
 //Declare : ProtoType interface realization
-func (t *Map) Declare(w *os.File, indent string) {
+func (t *Map) Declare(w io.Writer, indent string) {
 	fmt.Fprintf(w, "map<%s, %s>", t.key, t.value.Name())
 }
 
@@ -141,7 +140,7 @@ type Oneof struct {
 }
 
 //Declare : ProtoType interface realization
-func (t *Oneof) Declare(w *os.File, indent string) {
+func (t *Oneof) Declare(w io.Writer, indent string) {
 	fmt.Fprintf(w, "%smessage %s {\n", indent, t.name)
 	fmt.Fprintf(w, "%s\toneof select {\n", indent)
 	// body
@@ -167,7 +166,7 @@ type Array struct {
 }
 
 //Declare : ProtoType interface realization
-func (t *Array) Declare(w *os.File, indent string) {
+func (t *Array) Declare(w io.Writer, indent string) {
 	// does't exist in protobuf
 	t.typedecl.Declare(w, indent)
 }
@@ -200,7 +199,7 @@ type MessageMembers struct {
 }
 
 //Declare : Message Member declaration
-func (t *MessageMembers) Declare(w *os.File, indent string) {
+func (t *MessageMembers) Declare(w io.Writer, indent string) {
 	fmt.Fprintf(w, "%s", indent)
 	// repeated
 	if t.typedecl.Repeated() {
@@ -225,7 +224,7 @@ type Message struct {
 }
 
 //Declare : ProtoType interface realization
-func (t *Message) Declare(w *os.File, indent string) {
+func (t *Message) Declare(w io.Writer, indent string) {
 	fmt.Fprintf(w, "%smessage %s {\n", indent, t.name)
 	// nested
 	for n := range t.nested {
@@ -263,9 +262,55 @@ func createOneOf(name string, oneof []*oasmodel.SchemaOrRef, parent *Message) (P
 	return &node, nil
 }
 
+// Basic Types
+// OAS specify format for type :
+// Type		Format	Description
+// number	–		Any numbers.
+// number	float	Floating-point numbers.
+// number	double	Floating-point numbers with double precision.
+// integer	–		Integer numbers.
+// integer	int32	Signed 32-bit integers (commonly used integer type).
+// integer	int64	Signed 64-bit integers (long type).
+
+// Protobuf has much more specs:
+// type = "double" | "float" | "int32" | "int64" | "uint32" | "uint64"
+//      | "sint32" | "sint64" | "fixed32" | "fixed64" | "sfixed32" | "sfixed64"
+//      | "bool" | "string" | "bytes" | messageType | enumType
+func createTypename(typename, format string) string {
+	switch typename {
+	case "number":
+		switch format {
+		case "float":
+			return "float"
+		case "double":
+			return "double"
+		default:
+			return "double"
+		}
+	case "integer":
+		switch format {
+		case "int32":
+			return "int32"
+		case "int64":
+			return "int32"
+		case "uint32":
+			return "uint32"
+		case "uint64":
+			return "uint64"
+		default:
+			return "int32"
+		}
+	case "boolean":
+		return "bool"
+	}
+
+	return typename
+}
+
 func createAllOf(name string, allOf []*oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
 	node := Message{name, nil, nil}
 	num := 0
+
 	// parse all allOf members
 	for _, val := range allOf {
 		current := val.Schema()
@@ -275,8 +320,7 @@ func createAllOf(name string, allOf []*oasmodel.SchemaOrRef, parent *Message) (P
 		} else {
 			keys = keysorder(current.Properties)
 		}
-		for i := range keys {
-			m := keys[i]
+		for _, m := range keys {
 			num++
 			f := MessageMembers{nil, m, num}
 			prop := current.Properties[m]
@@ -292,82 +336,91 @@ func createAllOf(name string, allOf []*oasmodel.SchemaOrRef, parent *Message) (P
 }
 
 func createObject(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
-	// otherwise
+	var err error
+
 	node := Message{name, nil, nil}
-	// parse elements
 	num := 0
+	// sorting Properties Name
 	var keys []string
 	if len(schema.XPropertiesOrder) > 0 {
 		keys = schema.XPropertiesOrder
 	} else {
 		keys = keysorder(schema.Properties)
 	}
-	for i := range keys {
-		m := keys[i]
+
+	// Add each Properties as message Member
+	for _, m := range keys {
 		num++
 		f := MessageMembers{nil, m, num}
 		prop := schema.Properties[m]
-		t, err := CreateType(name+"_"+m, prop, &node)
+		f.typedecl, err = CreateType(name+"_"+m, prop, &node)
 		if err != nil {
 			return nil, err
 		}
-		f.typedecl = t
 		node.body = append(node.body, f)
 	}
+	// if has parent insert as nested message
 	if parent != nil {
 		parent.nested = append(parent.nested, &node)
 	}
 	return &node, nil
 }
 
-func createAdditionnalProperties(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
+func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
+	if parent == nil {
+		return nil, fmt.Errorf("Warning: Additional Properties can only be a message member (ignore)")
+	}
 	if schema.Type != "object" {
 		return nil, fmt.Errorf("Schema %s with Additional Properties must be an object", name)
 	}
+
 	objType, err := CreateType(name+"Elem", schema.AdditionalProperties.Schema, parent)
 	if err != nil {
 		return nil, err
 	}
-	node := Map{name, "string", objType}
-	return &node, nil
+	return &Map{name, "string", objType}, nil
+
 }
 
 //CreateType : convert OAS Schema to internal ProtoType
 func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
-	if schemaOrRef.Ref != nil {
-		return &TypeName{schemaOrRef.Ref.RefName, ""}, nil
-	}
 	schema := schemaOrRef.Schema()
+
+	// In case of Ref, we need to get the corresponding type name
+	if schemaOrRef.Ref != nil {
+		if schema.AllOf != nil || schema.Type == "object" && schema.AdditionalProperties == nil || (schema.Type == "string" && len(schema.Enum) > 0) {
+			// in case of Ref, reference type name only for messages :
+			return &TypeName{schemaOrRef.Ref.RefName}, nil
+		}
+	}
+
+	// case Oneof
 	if schema.OneOf != nil {
 		return createOneOf(name, schema.OneOf, parent)
 	}
+
+	// case AllOf
 	if schema.AllOf != nil {
 		return createAllOf(name, schema.AllOf, parent)
 	}
 
-	// Case AdditionnalProperties
+	// Case AdditionalProperties
 	if schema.AdditionalProperties != nil {
-		return createAdditionnalProperties(name, schema, parent)
+		return createAdditionalProperties(name, schema, parent)
 	}
 
+	// case Object
 	if schema.Type == "object" {
 		return createObject(name, schema, parent)
 	}
 
+	// case Array
 	if schema.Type == "array" {
 		t, err := CreateType(name+"Elem", schema.Items, parent)
 		if err != nil {
 			return nil, err
 		}
 		return &Array{t}, nil
-	}
-
-	if schema.Type == "boolean" {
-		return &TypeName{"bool", ""}, nil
-	}
-
-	if schema.Type == "integer" {
-		return &TypeName{"int32", ""}, nil
 	}
 
 	// Enums
@@ -384,10 +437,10 @@ func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message)
 
 	// bytes
 	if schema.Type == "string" && schema.Format == "binary" {
-		return &TypeName{"bytes", ""}, nil
+		return &TypeName{"bytes"}, nil
 	}
 
-	return &TypeName{schema.Type, ""}, nil
+	return &TypeName{createTypename(schema.Type, schema.Format)}, nil
 }
 
 func keysorder(m map[string]*oasmodel.SchemaOrRef) []string {
@@ -402,7 +455,7 @@ func keysorder(m map[string]*oasmodel.SchemaOrRef) []string {
 }
 
 //Components2Proto : generate proto file from Parsed OpenAPI definition
-func Components2Proto(oa *oasmodel.OpenAPI, f *os.File, packageName string, options ...string) error {
+func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, options ...string) error {
 	oa.ResolveRefs()
 	nodeList := make([]ProtoType, 0, 10)
 	// create first level Nodes
@@ -410,7 +463,8 @@ func Components2Proto(oa *oasmodel.OpenAPI, f *os.File, packageName string, opti
 		v := oa.Components.Schemas[k]
 		node, err := CreateType(k, v, nil)
 		if err != nil {
-			return err
+			// silentely ignore it
+			continue
 		}
 		nodeList = append(nodeList, node)
 	}
