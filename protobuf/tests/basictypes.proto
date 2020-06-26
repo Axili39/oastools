@@ -1,0 +1,18 @@
+syntax = "proto3";
+message fooNumber {
+	double member1 = 1;
+	float member2 = 2;
+	double member3 = 3;
+}
+message fooString {
+	int32 member1 = 1;
+	uint32 member2 = 2;
+	uint64 member3 = 3;
+	int32 member4 = 4;
+	int64 member5 = 5;
+	bool membool = 6;
+}
+message fooText {
+	bytes data = 1;
+	string text = 2;
+}

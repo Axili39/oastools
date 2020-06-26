@@ -53,26 +53,6 @@ type ProtoType interface {
 	Repeated() bool
 }
 
-//TypeName simple type or reference (by-name)
-type TypeName struct {
-	name string
-}
-
-//Declare : ProtoType interface realization
-func (t *TypeName) Declare(w io.Writer, indent string) {
-	// does't exist in protobuf
-}
-
-//Name :  ProtoType interface realization
-func (t *TypeName) Name() string {
-	return t.name
-}
-
-//Repeated ProtoType interface realization
-func (t *TypeName) Repeated() bool {
-	return false
-}
-
 //Enum simple type or reference (by-name)
 type Enum struct {
 	name   string
@@ -120,7 +100,8 @@ type Map struct {
 
 //Declare : ProtoType interface realization
 func (t *Map) Declare(w io.Writer, indent string) {
-	fmt.Fprintf(w, "map<%s, %s>", t.key, t.value.Name())
+	//log.Println("called MAP.Declare()")
+	//fmt.Fprintf(w, "map<%s, %s>", t.key, t.value.Name())
 }
 
 //Name :  ProtoType interface realization
@@ -262,51 +243,6 @@ func createOneOf(name string, oneof []*oasmodel.SchemaOrRef, parent *Message) (P
 	return &node, nil
 }
 
-// Basic Types
-// OAS specify format for type :
-// Type		Format	Description
-// number	–		Any numbers.
-// number	float	Floating-point numbers.
-// number	double	Floating-point numbers with double precision.
-// integer	–		Integer numbers.
-// integer	int32	Signed 32-bit integers (commonly used integer type).
-// integer	int64	Signed 64-bit integers (long type).
-
-// Protobuf has much more specs:
-// type = "double" | "float" | "int32" | "int64" | "uint32" | "uint64"
-//      | "sint32" | "sint64" | "fixed32" | "fixed64" | "sfixed32" | "sfixed64"
-//      | "bool" | "string" | "bytes" | messageType | enumType
-func createTypename(typename, format string) string {
-	switch typename {
-	case "number":
-		switch format {
-		case "float":
-			return "float"
-		case "double":
-			return "double"
-		default:
-			return "double"
-		}
-	case "integer":
-		switch format {
-		case "int32":
-			return "int32"
-		case "int64":
-			return "int32"
-		case "uint32":
-			return "uint32"
-		case "uint64":
-			return "uint64"
-		default:
-			return "int32"
-		}
-	case "boolean":
-		return "bool"
-	}
-
-	return typename
-}
-
 func createAllOf(name string, allOf []*oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
 	node := Message{name, nil, nil}
 	num := 0
@@ -367,9 +303,11 @@ func createObject(name string, schema *oasmodel.Schema, parent *Message) (ProtoT
 }
 
 func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
-	if parent == nil {
-		return nil, fmt.Errorf("Warning: Additional Properties can only be a message member (ignore)")
-	}
+	/*
+		if parent == nil {
+			return nil, fmt.Errorf("Warning: Additional Properties can only be a message member (ignore)")
+		}
+	*/
 	if schema.Type != "object" {
 		return nil, fmt.Errorf("Schema %s with Additional Properties must be an object", name)
 	}
@@ -390,7 +328,7 @@ func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message)
 	if schemaOrRef.Ref != nil {
 		if schema.AllOf != nil || schema.Type == "object" && schema.AdditionalProperties == nil || (schema.Type == "string" && len(schema.Enum) > 0) {
 			// in case of Ref, reference type name only for messages :
-			return &TypeName{schemaOrRef.Ref.RefName}, nil
+			return createTypename(schemaOrRef.Ref.RefName, "")
 		}
 	}
 
@@ -435,12 +373,7 @@ func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message)
 		return &node, nil
 	}
 
-	// bytes
-	if schema.Type == "string" && schema.Format == "binary" {
-		return &TypeName{"bytes"}, nil
-	}
-
-	return &TypeName{createTypename(schema.Type, schema.Format)}, nil
+	return createTypename(schema.Type, schema.Format)
 }
 
 func keysorder(m map[string]*oasmodel.SchemaOrRef) []string {

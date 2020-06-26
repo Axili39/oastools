@@ -1,0 +1,41 @@
+components:
+  schemas:
+    fooString:
+      type: object
+      properties:
+        member1:
+          type: integer
+        member2:
+          type: integer
+          format: uint32
+        member3:
+          type: integer
+          format: uint64
+        member4:
+          type: integer
+          format: int32
+        member5:
+          type: integer
+          format: int64
+        membool:
+          type: boolean
+    fooText:
+      type: object
+      properties:
+        text:
+          type: string
+        data:
+          type: string
+          format: binary
+    fooNumber:
+      type: object
+      properties:
+        member1:
+          type: number
+        member2:
+          type: number
+          format: float
+        member3:
+          type: number
+          format: double
+

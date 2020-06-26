@@ -42,8 +42,8 @@ func TestLoop(t *testing.T) {
 		}
 
 		// compare
-		if string(expected) != string(output.Bytes()) {
-			t.Errorf("Result differ for %s \ngot:\n%s\nexpected:\n%s", match, string(output.Bytes()), string(expected))
+		if string(expected) != output.String() {
+			t.Errorf("Result differ for %s \ngot:\n%s\nexpected:\n%s", match, output.String(), string(expected))
 		}
 	}
 }
