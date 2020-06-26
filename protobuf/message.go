@@ -70,10 +70,7 @@ func (t *Message) Name() string {
 }
 
 func isRepeated(schema *oasmodel.SchemaOrRef) bool {
-	if schema.Schema().Type == "array" {
-		return true
-	}
-	return false
+	return schema.Schema().Type == "array"
 }
 
 func createMessage(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
