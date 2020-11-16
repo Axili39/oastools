@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/Axili39/oastools/oasmodel"
 	"github.com/Axili39/oastools/protobuf"
@@ -28,7 +29,8 @@ func (i *stringList) Set(value string) error {
 }
 
 func compileProto(protofilename string, directory string) {
-	cmd := exec.Command("protoc", "--go_out="+directory, protofilename)
+	protoPath := filepath.Dir(protofilename)
+	cmd := exec.Command("protoc", "--go_out="+directory, "--proto_path="+protoPath, protofilename)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = os.Stdout
