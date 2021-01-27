@@ -2,6 +2,7 @@ package oasmodel
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -541,9 +542,10 @@ type XML struct {
 }
 
 type Ref struct {
-	Ref      string      `yaml:"$ref,omitempty"`
-	Resolved interface{} `yaml:"-"`
-	RefName  string
+	Ref         string      `yaml:"$ref,omitempty"`
+	Description string      `yaml:"description,omitempty"`
+	Resolved    interface{} `yaml:"-"`
+	RefName     string
 }
 type CallbackOrRef struct {
 	Ref *Ref
@@ -697,6 +699,13 @@ func (s *SchemaOrRef) MarshalYAML() (interface{}, error) {
 	return s.Val, nil
 }
 
+func (s *SchemaOrRef) Description() string {
+	if s.Ref != nil {
+		return s.Ref.Description
+	}
+	return s.Val.Description
+}
+
 // Implements the Unmarshaler interface of the yaml pkg.
 func (e *AdditionalProperties) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	*e = AdditionalProperties{}
@@ -733,6 +742,21 @@ func (oa *OpenAPI) UnMarshal(buffer []byte) (*OpenAPI, error) {
 		return nil, err
 	}
 	return oa, nil
+}
+
+//Load Charge le fichier de spec d'interface
+func (oa *OpenAPI) Read(file io.Reader) error {
+	yamlFile, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Printf("yamlFile.Get err   #%v ", err)
+		return err
+	}
+	err = yaml.Unmarshal(yamlFile, oa)
+	if err != nil {
+		log.Fatalf("Unmarshal: %v", err)
+		return err
+	}
+	return nil
 }
 
 //Load Charge le fichier de spec d'interface
