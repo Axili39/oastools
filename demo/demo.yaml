@@ -37,12 +37,14 @@ components:
           items:
             type: string
     A:
+      description: "Message A"
       type: object
       x-properties-order: [def, abc]
       properties:
         abc:
           type: string
         def:
+          description: membre def pour bla bla
           type: object
           x-properties-order: [member1, member2, member3, accessPoint]
           properties:

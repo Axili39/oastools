@@ -43,7 +43,7 @@ func compileProto(protofilename string, directory string) {
 
 func main() {
 	build := flag.String("build", "", "build with protoc")
-	file := flag.String("f", "test.yaml", "yaml file to parse")
+	file := flag.String("f", "", "yaml file to parse")
 	out := flag.String("o", "", "output file")
 	packageName := flag.String("p", "", "package name eg: foo.bar")
 	showversion := flag.Bool("v", false, "show version")
@@ -70,8 +70,14 @@ func main() {
 		output = os.Stdout
 	}
 
+	// Chargement du fichier
+	var err error
 	oa := oasmodel.OpenAPI{}
-	err := oa.Load(*file)
+	if *file == "" {
+		err = oa.Read(os.Stdin)
+	} else {
+		err = oa.Load(*file)
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error loading %s : %v", *file, err)
 		os.Exit(1)
