@@ -95,7 +95,6 @@ func createMessage(name string, schema *oasmodel.Schema, parent *Message) (Proto
 	for _, m := range keys {
 		num++
 		prop := schema.Properties[m]
-		//fmt.Println(m, prop)
 		if prop == nil {
 			fmt.Println("bad property name : ", m)
 			os.Exit(1)
