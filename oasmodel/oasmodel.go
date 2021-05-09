@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-
+	"regexp"
 	"gopkg.in/yaml.v3"
 )
 
@@ -167,7 +167,7 @@ type PathItem struct {
 	Patch       *Operation  `yaml:"patch,omitempty"`
 	Trace       *Operation  `yaml:"trace,omitempty"`
 	Servers     []Server    `yaml:"servers,omitempty"`
-	Parameters  []Parameter `yaml:"parameters,omitempty"`
+	Parameters  []ParameterOrRef `yaml:"parameters,omitempty"`
 }
 
 /*Operation Object from OAS
@@ -190,7 +190,7 @@ type Operation struct {
 	Description  string              `yaml:"description,omitempty"`
 	ExternalDocs *ExternalDocs       `yaml:"externalDocs,omitempty"`
 	OperationID  string              `yaml:"operationId,omitempty"`
-	Parameters   []Parameter         `yaml:"parameters,omitempty"`
+	Parameters   []*ParameterOrRef         `yaml:"parameters,omitempty"`
 	RequestBody  *RequestBody        `yaml:"requestBody,omitempty"`
 	Responses    Responses           `yaml:"responses"`
 	Callbacks    map[string]Callback `yaml:"callbacks,omitempty"`
@@ -621,16 +621,24 @@ func (e *ParameterOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error 
 	*e = ParameterOrRef{}
 	ref := Ref{}
 	err := unmarshal(&ref)
-	if err != nil {
+
+	if ref.Ref == "" || err != nil {
 		val := Parameter{}
 		err = unmarshal(&val)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "error un marshalling CallbackOrRef")
 			return err
 		}
-		*e.Val = val
+		e.Val = &val
+		return nil
 	}
-	*e.Ref = ref
+
+	match, _ := regexp.MatchString("#/components/parameters/([a-z_0-9/]+)+", ref.Ref)
+    if !match {
+		fmt.Println("bad ref:",ref)
+		return fmt.Errorf("ref.Ref match not component reference")
+	}
+	e.Ref = &ref
 
 	return nil
 }

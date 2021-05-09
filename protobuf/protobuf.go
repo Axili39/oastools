@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"sort"
-
 	"github.com/Axili39/oastools/oasmodel"
 )
 
@@ -96,13 +95,13 @@ func keysorder(m map[string]*oasmodel.SchemaOrRef) []string {
 //Components2Proto : generate proto file from Parsed OpenAPI definition
 func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, options ...string) error {
 	oa.ResolveRefs()
-	fmt.Println(oa)
+	//fmt.Println(oa)
 	nodeList := make([]ProtoType, 0, 10)
 	// create first level Nodes
 	for _, k := range keysorder(oa.Components.Schemas) {
-		fmt.Println(k)
+		//fmt.Println(k)
 		v := oa.Components.Schemas[k]
-		fmt.Println(v)
+		//fmt.Println(v)
 		node, err := CreateType(k, v, nil)
 		if err != nil {
 			// silentely ignore it
