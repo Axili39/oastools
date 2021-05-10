@@ -1,7 +1,5 @@
 package main
 
-//go:generate ./mkversion.sh
-
 import (
 	"bytes"
 	"flag"
@@ -11,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime/debug"
 
 	"github.com/Axili39/oastools/oasmodel"
 	"github.com/Axili39/oastools/protobuf"
@@ -36,7 +35,7 @@ func compileProto(protofilename string, directory string) {
 	cmd.Stderr = os.Stdout
 	err := cmd.Run()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error running protoc command %v\n", err)
+		fmt.Fprintf(os.Stderr, "error %v running protoc command: %v\n", err, cmd)
 		os.Exit(1)
 	}
 }
@@ -52,9 +51,14 @@ func main() {
 	flag.Parse()
 
 	if *showversion {
-		fmt.Println(version)
+		if info, available := debug.ReadBuildInfo(); available {
+			fmt.Println(info.Main.Version)
+		} else {
+			fmt.Println("unknown")
+		}
 		os.Exit(0)
 	}
+
 	log.SetFlags(0)
 	log.SetOutput(ioutil.Discard)
 	var output *os.File
