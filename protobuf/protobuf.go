@@ -71,6 +71,9 @@ func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message)
 	}
 	// case Array
 	if schema.Type == "array" {
+		if (parent == nil) {
+			return createMessageArray(name, schema)
+		}
 		return CreateType(name, schema.Items, parent)
 	}
 	// Enums

@@ -113,6 +113,21 @@ func createMessage(name string, schema *oasmodel.Schema, parent *Message) (Proto
 	return &node, nil
 }
 
+func createMessageArray(name string, schema *oasmodel.Schema) (ProtoType, error) {
+	var err error
+
+	node := Message{name + "Array", nil, nil, schema.Description}
+	
+	f := MessageMembers{nil, "Items", 1, true, schema.Items.Description()}
+	f.typedecl, err = CreateType(name, schema.Items, &node)
+	if err != nil {
+		return nil, err
+	}
+	node.body = append(node.body, f)
+	
+	return &node, nil
+}
+
 // Array : array of Prototype
 type Oneof struct {
 	name    string

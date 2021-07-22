@@ -36,6 +36,27 @@ components:
           type: array
           items:
             type: string
+    MyTruc:
+      type: array
+      description: mon tableau
+      items:
+        type: string
+
+    MyTruc2:
+      type: array
+      description: mon tableau 2
+      items:
+        type: object
+        x-properties-order: [abc]
+        properties:
+          abc:
+            type: string
+
+    MyTruc3:
+      type: array
+      description: mon tableau 3
+      items:
+        $ref: "#/components/schemas/A"
     A:
       description: "Message A"
       type: object
