@@ -20,3 +20,7 @@ go get github.com/Axili39/oastools/cmd/oa2proto
 
 go get github.com/Axili39/oastools/
 ```
+
+Usage
+-----
+oa2proto -f FILE [-node component1 ... -node componenentn] [-p package] [-option option1 ... -option optionn] [-o FILE.proto] [-build path] 

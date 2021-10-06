@@ -1,6 +1,6 @@
 abc: this is abc member
 def:
-    accessPoint:
+    access-Point:
         - addr: 192.168.1.1
           port: 8080
         - addr: 192.168.1.19
@@ -15,8 +15,8 @@ def:
             - b
             - c
     member3:
-        - name: 1st
+        - the-name: 1st
           valid: true
-        - name: 2nd
+        - the-name: 2nd
           valid: true
-        - name: 3rd
+        - the-name: 3rd

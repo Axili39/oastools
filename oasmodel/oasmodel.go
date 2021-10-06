@@ -882,3 +882,62 @@ func (s *SchemaOrRef) Schema() *Schema {
 	log.Fatalf("unable to convert %s into valid schema", s.Ref.Ref)
 	return nil
 }
+
+// ResolveRefs
+func (oa *OpenAPI) ResolveRefsWithFilter(filter []string) map[string]*SchemaOrRef {
+	refIndex := oa.makeSchemaRefIndex()
+	for _, v := range oa.Components.Schemas {
+		v.resolveRefs(refIndex)
+	}
+	// create filtrered map
+	filteredComponents := make(map[string]*SchemaOrRef)
+	for _, name := range filter {
+		if s, ok := oa.Components.Schemas[name] ; ok {
+			if _, already := filteredComponents[name] ; !already {
+				filteredComponents[name] = s
+				s.filterRefs(&filteredComponents)
+			}
+		}
+	}
+	return filteredComponents
+}
+
+func (s *SchemaOrRef) filterRefs(filteredComponents *map[string]*SchemaOrRef) {
+	if s.Ref != nil {
+		log.Printf("filtering : %s added", s.Ref.RefName)
+		(*filteredComponents)[s.Ref.RefName] = s
+		s.Ref.Resolved.(*SchemaOrRef).filterRefs(filteredComponents)
+		return
+	}
+
+	if s.Val.Properties != nil {
+		for p, v := range s.Val.Properties {
+			log.Printf("visit %s ...\n", p)
+			v.filterRefs(filteredComponents)
+		}
+	}
+	if s.Val.Items != nil {
+		s.Val.Items.filterRefs(filteredComponents)
+	}
+	if s.Val.AllOf != nil {
+		for p, v := range s.Val.AllOf {
+			log.Printf("visit %d %v ...\n", p, v)
+			v.filterRefs(filteredComponents)
+		}
+	}
+	if s.Val.OneOf != nil {
+		for p, v := range s.Val.OneOf {
+			log.Printf("visit %d %v ...\n", p, v)
+			v.filterRefs(filteredComponents)
+		}
+	}
+	if s.Val.AnyOf != nil {
+		for p, v := range s.Val.OneOf {
+			log.Printf("visit %d %v ...\n", p, v)
+			v.filterRefs(filteredComponents)
+		}
+	}
+	if s.Val.AdditionalProperties != nil {
+		s.Val.AdditionalProperties.Schema.filterRefs(filteredComponents)
+	}
+}

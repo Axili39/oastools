@@ -1,9 +1,15 @@
 syntax = "proto3";
+// Type : 
 message bar {
-	repeated int32 data = 1;
-	string data2 = 2;
+	repeated int32 data = 1; // 
+	string data2 = 2; // 
 }
+// Type : 
 message bar2 {
-	repeated string vector1 = 1;
-	repeated bar vector2 = 2;
+	repeated string vector1_ne = 1; // 
+	repeated bar vector2 = 2; // 
+}
+// Type : 
+message fooArray {
+	repeated int32 Items = 1; // 
 }

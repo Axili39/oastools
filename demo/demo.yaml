@@ -13,7 +13,7 @@ components:
       oneOf:
         - $ref: "#/components/schemas/B"
         - $ref: "#/components/schemas/A"
-    BindAddr:
+    Bind-Addr:
       type: object
       x-properties-order: [addr, port]
       properties:
@@ -67,7 +67,7 @@ components:
         def:
           description: membre def pour bla bla
           type: object
-          x-properties-order: [member1, member2, member3, accessPoint]
+          x-properties-order: [member1, member2, member3, access-Point]
           properties:
             member1:
               type: string
@@ -77,13 +77,13 @@ components:
               type: array
               items:
                 type: object
-                x-properties-order: [name, valid]
+                x-properties-order: [the-name, valid]
                 properties:
-                  name:
+                  the-name:
                     type: string
                   valid:
                     type: boolean
-            accessPoint:
+            access-Point:
               type: array
               items:
-                $ref: "#/components/schemas/BindAddr"
+                $ref: "#/components/schemas/Bind-Addr"

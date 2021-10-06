@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 	"github.com/Axili39/oastools/oasmodel"
 )
 
@@ -29,6 +30,10 @@ func (t *Map) Name() string {
 	return "map<" + t.key + ", " + t.value.Name() + ">"
 }
 
+func normalizeName(name string) string {
+	return strings.Replace(name, "-", "_", -1)
+}
+
 func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
 	if schema.Type != "object" {
 		return nil, fmt.Errorf("Schema %s with Additional Properties must be an object", name)
@@ -45,7 +50,6 @@ func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Me
 //CreateType : convert OAS Schema to internal ProtoType
 func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
 	schema := schemaOrRef.Schema()
-
 	// In case of Ref, we need to get the corresponding type name
 	if schemaOrRef.Ref != nil {
 		if schema.AllOf != nil || schema.Type == "object" && schema.AdditionalProperties == nil || (schema.Type == "string" && len(schema.Enum) > 0) {
@@ -96,11 +100,17 @@ func keysorder(m map[string]*oasmodel.SchemaOrRef) []string {
 }
 
 //Components2Proto : generate proto file from Parsed OpenAPI definition
-func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, options ...string) error {
-	oa.ResolveRefs()
+func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, filternodes []string, options ...string) error {
+	var items []string
+	if filternodes == nil {
+		oa.ResolveRefs()	
+		items = keysorder(oa.Components.Schemas)
+	} else {
+		items = keysorder(oa.ResolveRefsWithFilter(filternodes))	
+	}
 	nodeList := make([]ProtoType, 0, 10)
 	// create first level Nodes
-	for _, k := range keysorder(oa.Components.Schemas) {
+	for _, k := range items {
 		v := oa.Components.Schemas[k]
 		node, err := CreateType(k, v, nil)
 		if err != nil {

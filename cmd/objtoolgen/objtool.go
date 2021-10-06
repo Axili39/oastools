@@ -58,7 +58,7 @@ func genProto(file string, protofilename string, component string) {
 		os.Exit(1)
 	}
 
-	err = protobuf.Components2Proto(&oa, w, "foo.bar", "go_package=\".;main\"")
+	err = protobuf.Components2Proto(&oa, w, "foo.bar", nil, "go_package=\".;main\"")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error parsing %s : %v", file, err)
 		os.Exit(1)

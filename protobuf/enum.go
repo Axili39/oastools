@@ -26,10 +26,10 @@ enum Corpus {
   }
 */
 func (t *Enum) Declare(w io.Writer, indent string) {
-	fmt.Fprintf(w, "%senum %s {\n", indent, t.name)
+	fmt.Fprintf(w, "%senum %s {\n", indent, normalizeName(t.name))
 	values := 0
 	for i := range t.values {
-		fmt.Fprintf(w, "%s\t%s = %d;\n", indent, t.values[i], values)
+		fmt.Fprintf(w, "%s\t%s = %d;\n", indent, normalizeName(t.values[i]), values)
 		values++
 	}
 	fmt.Fprintf(w, "%s}\n", indent)

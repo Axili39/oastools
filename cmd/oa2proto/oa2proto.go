@@ -47,7 +47,9 @@ func main() {
 	packageName := flag.String("p", "", "package name eg: foo.bar")
 	showversion := flag.Bool("v", false, "show version")
 	var options stringList
-	flag.Var(&options, "option", "add directive option in .proto file")
+	flag.Var(&options, "option", "add directive option in .proto file (multi)")
+	var filteredNodes stringList
+	flag.Var(&filteredNodes, "node", "select component (multi)")
 	flag.Parse()
 
 	if *showversion {
@@ -86,7 +88,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error loading %s : %v", *file, err)
 		os.Exit(1)
 	}
-	err = protobuf.Components2Proto(&oa, output, *packageName, options...)
+
+	err = protobuf.Components2Proto(&oa, output, *packageName, filteredNodes, options...)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error parsing %s : %v", *file, err)
 		os.Exit(1)

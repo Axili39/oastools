@@ -15,7 +15,7 @@ components:
     bar2:
       type: object
       properties:
-        vector1:
+        vector1-ne:
           type:  array
           items:
             type: string

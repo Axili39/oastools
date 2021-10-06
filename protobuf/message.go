@@ -35,7 +35,7 @@ func (t *MessageMembers) Declare(w io.Writer, indent string) {
 		fmt.Fprintf(w, "repeated ")
 	}
 	// field decl
-	fmt.Fprintf(w, "%s %s = %d;", t.typedecl.Name(), t.name, t.number)
+	fmt.Fprintf(w, "%s %s = %d;", normalizeName(t.typedecl.Name()), normalizeName(t.name), t.number)
 	// TODO : options
 	fmt.Fprintf(w, " // %s", t.comment)
 	fmt.Fprintf(w, "\n")
@@ -57,7 +57,7 @@ type Message struct {
 //Declare : ProtoType interface realization
 func (t *Message) Declare(w io.Writer, indent string) {
 	fmt.Fprintf(w, "%s// Type : %s\n", indent, t.comment)
-	fmt.Fprintf(w, "%smessage %s {\n", indent, t.name)
+	fmt.Fprintf(w, "%smessage %s {\n", indent, normalizeName(t.name))
 	// nested
 	for n := range t.nested {
 		t.nested[n].Declare(w, indent+"\t")
@@ -136,7 +136,7 @@ type Oneof struct {
 
 //Declare : ProtoType interface realization
 func (t *Oneof) Declare(w io.Writer, indent string) {
-	fmt.Fprintf(w, "%smessage %s {\n", indent, t.name)
+	fmt.Fprintf(w, "%smessage %s {\n", indent, normalizeName(t.name))
 	fmt.Fprintf(w, "%s\toneof select {\n", indent)
 	// body
 	for m := range t.members {
