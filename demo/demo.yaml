@@ -11,8 +11,8 @@ components:
   schemas:
     C:
       oneOf:
-        - $ref: "#/components/schemas/B"
-        - $ref: "#/components/schemas/A"
+        - $ref: "#/components/schemas/B_pStruct"
+        - $ref: "#/components/schemas/A_B_C_X_name"
     Bind-Addr:
       type: object
       x-properties-order: [addr, port]
@@ -21,7 +21,7 @@ components:
           type: string
         port:
           type: integer
-    B:
+    B_pStruct:
       type: object
       x-properties-order: [ghi, abc, def]
       properties:
@@ -56,8 +56,8 @@ components:
       type: array
       description: mon tableau 3
       items:
-        $ref: "#/components/schemas/A"
-    A:
+        $ref: "#/components/schemas/A_B_C_X_name"
+    A_B_C_X_name:
       description: "Message A"
       type: object
       x-properties-order: [def, abc]
@@ -67,23 +67,23 @@ components:
         def:
           description: membre def pour bla bla
           type: object
-          x-properties-order: [member1, member2, member3, access-Point]
+          x-properties-order: [member1, member2, member3, access_Point]
           properties:
             member1:
               type: string
             member2:
-              $ref: "#/components/schemas/B"
+              $ref: "#/components/schemas/B_pStruct"
             member3:
               type: array
               items:
                 type: object
-                x-properties-order: [the-name, valid]
+                x-properties-order: [the_name, valid]
                 properties:
-                  the-name:
+                  the_name:
                     type: string
                   valid:
                     type: boolean
-            access-Point:
+            access_Point:
               type: array
               items:
                 $ref: "#/components/schemas/Bind-Addr"
