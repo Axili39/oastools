@@ -37,7 +37,7 @@ func (t *MessageMembers) Declare(w io.Writer, indent string) {
 	// field decl
 	fmt.Fprintf(w, "%s %s = %d;", normalizeName(t.typedecl.Name()), normalizeName(t.name), t.number)
 	// TODO : options
-	fmt.Fprintf(w, " // %s", t.comment)
+	fmt.Fprintf(w, " /* %s */", t.comment)
 	fmt.Fprintf(w, "\n")
 }
 
@@ -56,7 +56,7 @@ type Message struct {
 
 //Declare : ProtoType interface realization
 func (t *Message) Declare(w io.Writer, indent string) {
-	fmt.Fprintf(w, "%s// Type : %s\n", indent, t.comment)
+	fmt.Fprintf(w, "%s/* Type : %s */\n", indent, t.comment)
 	fmt.Fprintf(w, "%smessage %s {\n", indent, normalizeName(t.name))
 	// nested
 	for n := range t.nested {

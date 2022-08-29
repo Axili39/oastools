@@ -15,4 +15,7 @@ components:
         member1:
           type: string
         member2:
+          description: |
+            ligne 1
+            ligne 2
           type: integer

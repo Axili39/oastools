@@ -36,4 +36,6 @@ components:
           type: object
           additionalProperties:
             $ref: "#/components/schemas/bar"
-
+        prop5:
+          type: object
+          additionalProperties: false

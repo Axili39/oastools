@@ -28,7 +28,7 @@ func TestLoop(t *testing.T) {
 			t.Errorf("error loading %s : %v", match, err)
 		}
 		output := &bytes.Buffer{}
-		err = Components2Proto(&oa, output, "")
+		err = Components2Proto(&oa, output, "", nil)
 		if err != nil {
 			t.Errorf("Error loading file %s : %v\n", info.Name(), err)
 		}

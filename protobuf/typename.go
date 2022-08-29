@@ -4,17 +4,17 @@ import (
 	"io"
 )
 
-//TypeName simple type or reference (by-name)
+// TypeName simple type or reference (by-name)
 type TypeName struct {
 	name string
 }
 
-//Declare : ProtoType interface realization
+// Declare : ProtoType interface realization
 func (t *TypeName) Declare(w io.Writer, indent string) {
 	// does't exist in protobuf
 }
 
-//Name :  ProtoType interface realization
+// Name :  ProtoType interface realization
 func (t *TypeName) Name() string {
 	return t.name
 }
@@ -31,8 +31,9 @@ func (t *TypeName) Name() string {
 
 // Protobuf has much more specs:
 // type = "double" | "float" | "int32" | "int64" | "uint32" | "uint64"
-//      | "sint32" | "sint64" | "fixed32" | "fixed64" | "sfixed32" | "sfixed64"
-//      | "bool" | "string" | "bytes" | messageType | enumType
+//
+//	| "sint32" | "sint64" | "fixed32" | "fixed64" | "sfixed32" | "sfixed64"
+//	| "bool" | "string" | "bytes" | messageType | enumType
 func createTypename(typename, format string) (ProtoType, error) {
 	if typename == "number" {
 		if format == "" {

@@ -5,27 +5,28 @@ import (
 	"io"
 	"sort"
 	"strings"
+
 	"github.com/Axili39/oastools/oasmodel"
 )
 
-//ProtoType Field Type protocol buffer interface
+// ProtoType Field Type protocol buffer interface
 type ProtoType interface {
 	Declare(w io.Writer, indent string)
 	Name() string
 }
 
-//Map object, used to represents AdditionalProperties
+// Map object, used to represents AdditionalProperties
 type Map struct {
 	name  string
 	key   string
 	value ProtoType
 }
 
-//Declare : ProtoType interface realization
+// Declare : ProtoType interface realization
 func (t *Map) Declare(w io.Writer, indent string) {
 }
 
-//Name :  ProtoType interface realization
+// Name :  ProtoType interface realization
 func (t *Map) Name() string {
 	return "map<" + t.key + ", " + t.value.Name() + ">"
 }
@@ -39,6 +40,10 @@ func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Me
 		return nil, fmt.Errorf("Schema %s with Additional Properties must be an object", name)
 	}
 
+	if schema.AdditionalProperties.Schema == nil {
+		return nil, fmt.Errorf("Schema %s with Additional Properties : Unsupported AdditionalProperties with boolean value for protobuf generation, Schema MUST be provided", name)
+	}
+
 	objType, err := CreateType(name+"Elem", schema.AdditionalProperties.Schema, parent)
 	if err != nil {
 		return nil, err
@@ -47,7 +52,7 @@ func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Me
 
 }
 
-//CreateType : convert OAS Schema to internal ProtoType
+// CreateType : convert OAS Schema to internal ProtoType
 func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
 	schema := schemaOrRef.Schema()
 	// In case of Ref, we need to get the corresponding type name
@@ -75,7 +80,7 @@ func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message)
 	}
 	// case Array
 	if schema.Type == "array" {
-		if (parent == nil) {
+		if parent == nil {
 			return createMessageArray(name, schema)
 		}
 		return CreateType(name, schema.Items, parent)
@@ -99,14 +104,14 @@ func keysorder(m map[string]*oasmodel.SchemaOrRef) []string {
 	return keys
 }
 
-//Components2Proto : generate proto file from Parsed OpenAPI definition
+// Components2Proto : generate proto file from Parsed OpenAPI definition
 func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, filternodes []string, options ...string) error {
 	var items []string
 	if filternodes == nil {
-		oa.ResolveRefs()	
+		oa.ResolveRefs()
 		items = keysorder(oa.Components.Schemas)
 	} else {
-		items = keysorder(oa.ResolveRefsWithFilter(filternodes))	
+		items = keysorder(oa.ResolveRefsWithFilter(filternodes))
 	}
 	nodeList := make([]ProtoType, 0, 10)
 	// create first level Nodes
@@ -114,7 +119,7 @@ func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, fil
 		v := oa.Components.Schemas[k]
 		node, err := CreateType(k, v, nil)
 		if err != nil {
-			// silentely ignore it
+			fmt.Println("error : ", err)
 			continue
 		}
 		nodeList = append(nodeList, node)
