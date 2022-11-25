@@ -713,7 +713,7 @@ func (s *SchemaOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		val := Schema{}
 		err = unmarshal(&val)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "error un marshalling SchemaOrRef")
+			fmt.Fprintln(os.Stderr, "error un marshalling SchemaOrRef", ref)
 			return err
 		}
 
