@@ -45,6 +45,10 @@ func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Me
 		return nil, fmt.Errorf("Schema %s with Additional Properties must be an object", name)
 	}
 
+	if schema.AdditionalProperties.Schema == nil {
+		return nil, fmt.Errorf("Schema %s with Additional Properties : Unsupported AdditionalProperties with boolean value for protobuf generation, Schema MUST be provided", name)
+	}
+
 	objType, err := CreateType(name+"Elem", schema.AdditionalProperties.Schema, parent, genOpts)
 	if err != nil {
 		return nil, err
@@ -120,7 +124,7 @@ func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, gen
 		v := oa.Components.Schemas[k]
 		node, err := CreateType(k, v, nil, genOpts)
 		if err != nil {
-			// silentely ignore it
+			fmt.Println("error : ", err)
 			continue
 		}
 		nodeList = append(nodeList, node)
