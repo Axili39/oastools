@@ -7,16 +7,18 @@ import (
 	"log"
 	"os"
 	"regexp"
+
 	"gopkg.in/yaml.v3"
 )
 
-//refIndexElement part of map used to resolve $ref directive
+// refIndexElement part of map used to resolve $ref directive
 type refIndexElement struct {
 	name   string
 	schema *SchemaOrRef
 }
 
-/*OpenAPI From OAS
+/*
+OpenAPI From OAS
 openapi 		string 	REQUIRED. 			This string MUST be the semantic version number of the OpenAPI Specification version that the OpenAPI document uses. The openapi field SHOULD be used by tooling specifications and clients to interpret the OpenAPI document. This is not related to the API info.version string.
 info 			Info Object 	REQUIRED. 	Provides metadata about the API. The metadata MAY be used by tooling as required.
 servers 		[Server Object] 			An array of Server Objects, which provide connectivity information to a target server. If the servers property is not provided, or is an empty array, the default value would be a Server Object with a url value of /.
@@ -39,7 +41,8 @@ type OpenAPI struct {
 	XWsRPC       map[string]XwsRPCService   `yaml:"x-ws-rpc,omitempty"`
 }
 
-/*Tag Object from OAS
+/*
+Tag Object from OAS
 name 			string 	REQUIRED. 		The name of the tag.
 description 	string 					A short description for the tag. CommonMark syntax MAY be used for rich text representation.
 externalDocs 	External 				Documentation Object 	Additional external documentation for this tag.
@@ -50,7 +53,8 @@ type Tag struct {
 	ExternalDocs ExternalDocs `yaml:"externalDocs,omitempty"`
 }
 
-/*Components Object from OAS
+/*
+Components Object from OAS
 schemas 		Map[string, Schema Object | Reference Object] 		An object to hold reusable Schema Objects.
 responses 		Map[string, Response Object | Reference Object] 	An object to hold reusable Response Objects.
 parameters 		Map[string, Parameter Object | Reference Object] 	An object to hold reusable Parameter Objects.
@@ -73,7 +77,8 @@ type Components struct {
 	Callbacks       map[string]*CallbackOrRef       `yaml:"callbacks,omitempty"`
 }
 
-/*Info ... From OAS Specifications :
+/*
+Info ... From OAS Specifications :
 title 			string REQUIRED. 	The title of the API.
 description 	string 				A short description of the API. CommonMark syntax MAY be used for rich text representation.
 termsOfService 	string 				A URL to the Terms of Service for the API. MUST be in the format of a URL.
@@ -90,7 +95,8 @@ type Info struct {
 	Version        string   `yaml:"version"`
 }
 
-/*Contact from OAS Specifications :
+/*
+Contact from OAS Specifications :
 name      string The identifying name of the contact person/organization.
 url       string The URL pointing to the contact information. MUST be in the format of a URL.
 email     string The email address of the contact person/organization. MUST be in the format of an email address.
@@ -101,7 +107,8 @@ type Contact struct {
 	Email string `yaml:"email,omitempty"`
 }
 
-/*License from OAS Specifications :
+/*
+License from OAS Specifications :
 name      string REQUIRED. The license name used for the API.
 url string A URL to the license used for the API. MUST be in the format of a URL.
 */
@@ -110,7 +117,8 @@ type License struct {
 	URL  string `yaml:"url,omitempty"`
 }
 
-/*Server from OAS Specifications:
+/*
+Server from OAS Specifications:
 url string REQUIRED. A URL to the target host. This URL supports Server Variables and MAY be relative, to indicate that the host location is relative to the location where the OpenAPI document is being served. Variable substitutions will be made when a variable is named in {brackets}.
 description string An optional string describing the host designated by the URL. CommonMark syntax MAY be used for rich text representation.
 variables Map[string, Server Variable Object] A map between a variable name and its value. The value is used for substitution in the server's URL template.
@@ -121,7 +129,8 @@ type Server struct {
 	Variables   map[string]ServerVariable `yaml:"variables,omitempty"`
 }
 
-/*ServerVariable from OAS Specifications:
+/*
+ServerVariable from OAS Specifications:
 enum [string] An enumeration of string values to be used if the substitution options are from a limited set. The array SHOULD NOT be empty.
 default string REQUIRED. The default value to use for substitution, which SHALL be sent if an alternate value is not supplied. Note this behavior is different than the Schema Object's treatment of default values, because in those cases parameter values are optional. If the enum is defined, the value SHOULD exist in the enum's values.
 description string An optional description for the server variable. CommonMark syntax MAY be used for rich text representation.
@@ -132,7 +141,8 @@ type ServerVariable struct {
 	Description string   `yaml:"decription,omitempty"`
 }
 
-/*PathItem Object from OAS Specifications
+/*
+PathItem Object from OAS Specifications
 /{path} Path Item Object A relative path to an individual endpoint. The field name MUST begin with a forward slash (/).
 The path is appended (no relative URL resolution) to the expanded URL from the Server Object's url
 field in order to construct the full URL. Path templating is allowed. When matching URLs, concrete (non-templated)
@@ -155,22 +165,23 @@ servers		[Server Object]		An alternative server array to service all operations 
 parameters	[Parameter Object | Reference Object] A list of parameters that are applicable for all the operations described under this path. These parameters can be overridden at the operation level, but cannot be removed there. The list MUST NOT include duplicated parameters. A unique parameter is defined by a combination of a name and location. The list can use the Reference Object to link to parameters that are defined at the OpenAPI Object's components/parameters.
 */
 type PathItem struct {
-	Ref         string      `yaml:"$ref,omitempty"`
-	Summary     string      `yaml:"summary,omitempty"`
-	Description string      `yaml:"description,omitempty"`
-	Get         *Operation  `yaml:"get,omitempty"`
-	Put         *Operation  `yaml:"put,omitempty"`
-	Post        *Operation  `yaml:"post,omitempty"`
-	Delete      *Operation  `yaml:"delete,omitempty"`
-	Options     *Operation  `yaml:"options,omitempty"`
-	Head        *Operation  `yaml:"head,omitempty"`
-	Patch       *Operation  `yaml:"patch,omitempty"`
-	Trace       *Operation  `yaml:"trace,omitempty"`
-	Servers     []Server    `yaml:"servers,omitempty"`
+	Ref         string           `yaml:"$ref,omitempty"`
+	Summary     string           `yaml:"summary,omitempty"`
+	Description string           `yaml:"description,omitempty"`
+	Get         *Operation       `yaml:"get,omitempty"`
+	Put         *Operation       `yaml:"put,omitempty"`
+	Post        *Operation       `yaml:"post,omitempty"`
+	Delete      *Operation       `yaml:"delete,omitempty"`
+	Options     *Operation       `yaml:"options,omitempty"`
+	Head        *Operation       `yaml:"head,omitempty"`
+	Patch       *Operation       `yaml:"patch,omitempty"`
+	Trace       *Operation       `yaml:"trace,omitempty"`
+	Servers     []Server         `yaml:"servers,omitempty"`
 	Parameters  []ParameterOrRef `yaml:"parameters,omitempty"`
 }
 
-/*Operation Object from OAS
+/*
+Operation Object from OAS
 tags			[string]								A list of tags for API documentation control. Tags can be used for logical grouping of operations by resources or any other qualifier.
 summary 		string									A short summary of what the operation does.
 description		string									A verbose explanation of the operation behavior. CommonMark syntax MAY be used for rich text representation.
@@ -190,7 +201,7 @@ type Operation struct {
 	Description  string              `yaml:"description,omitempty"`
 	ExternalDocs *ExternalDocs       `yaml:"externalDocs,omitempty"`
 	OperationID  string              `yaml:"operationId,omitempty"`
-	Parameters   []*ParameterOrRef         `yaml:"parameters,omitempty"`
+	Parameters   []*ParameterOrRef   `yaml:"parameters,omitempty"`
 	RequestBody  *RequestBody        `yaml:"requestBody,omitempty"`
 	Responses    Responses           `yaml:"responses"`
 	Callbacks    map[string]Callback `yaml:"callbacks,omitempty"`
@@ -200,7 +211,8 @@ type Operation struct {
 	XWsRPC       string              `yaml:"x-ws-rpc,omitempty"` // x-ws-rpc Link to Service WebSocket Open Operation
 }
 
-/*ExternalDocs from OAS
+/*
+ExternalDocs from OAS
 description	string	A short description of the target documentation. CommonMark syntax MAY be used for rich text representation.
 url	string	REQUIRED. The URL for the target documentation. Value MUST be in the format of a URL.
 */
@@ -209,7 +221,8 @@ type ExternalDocs struct {
 	URL         string `yaml:"url"`
 }
 
-/*Parameter Object from OAS
+/*
+Parameter Object from OAS
 name			string REQUIRED. 		The name of the parameter. Parameter names are case sensitive.
 in 				string REQUIRED. 		The location of the parameter. Possible values are "query", "header", "path" or "cookie".
 description		string					A brief description of the parameter. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.
@@ -241,7 +254,8 @@ type Parameter struct {
 	Content         map[string]MediaType    `yaml:"content,omitempty"`
 }
 
-/*RequestBody Object from OAS:
+/*
+RequestBody Object from OAS:
 description	string A brief description of the request body. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.
 content Map[string, Media Type Object] REQUIRED. The content of the request body. The key is a media type or media type range and the value describes it. For requests that match multiple keys, only the most specific key is applicable. e.g. text/plain overrides text/*
 required boolean Determines if the request body is required in the request. Defaults to false.
@@ -253,7 +267,8 @@ type RequestBody struct {
 	Required    bool                 `yaml:"required"`
 }
 
-/*SecurityScheme from OAS
+/*
+SecurityScheme from OAS
 type 				string 	Any 	REQUIRED. The type of the security scheme. Valid values are "apiKey", "http", "oauth2", "openIdConnect".
 description 		string 	Any 				A short description for security scheme. CommonMark syntax MAY be used for rich text representation.
 name 				string 	apiKey 	REQUIRED. 	The name of the header, query or cookie parameter to be used.
@@ -274,7 +289,8 @@ type SecurityScheme struct {
 	OpenIDConnectURL string     `yaml:"openIdConnectUrl"`
 }
 
-/*OAuthFlows from OAS
+/*
+OAuthFlows from OAS
 implicit 			OAuth Flow Object 	Configuration for the OAuth Implicit flow
 password 			OAuth Flow Object 	Configuration for the OAuth Resource Owner Password flow
 clientCredentials 	OAuth Flow Object 	Configuration for the OAuth Client Credentials flow. Previously called application in OpenAPI 2.0.
@@ -287,7 +303,8 @@ type OAuthFlows struct {
 	AuthorizationCode *OAuth `yaml:"authorizationCode,omitempty"`
 }
 
-/*OAuth from OAS
+/*
+OAuth from OAS
 authorizationUrl 	string 					oauth2 ("implicit", "authorizationCode") 	REQUIRED. The authorization URL to be used for this flow. This MUST be in the form of a URL.
 tokenUrl 			string 					oauth2 ("password", "clientCredentials", "authorizationCode") 	REQUIRED. The token URL to be used for this flow. This MUST be in the form of a URL.
 refreshUrl 			string 					oauth2 	The URL to be used for obtaining refresh tokens. This MUST be in the form of a URL.
@@ -300,7 +317,8 @@ type OAuth struct {
 	Scopes           map[string]string `yaml:"scopes"`
 }
 
-/*MediaType Object from OAS:
+/*
+MediaType Object from OAS:
 schema			Schema Object | Reference Object	The schema defining the content of the request, response, or parameter.
 example			Any									Example of the media type. The example object SHOULD be in the correct format as specified by the media type. The example field is mutually exclusive of the examples field. Furthermore, if referencing a schema which contains an example, the example value SHALL override the example provided by the schema.
 examples		Map[ string, Example Object | Reference Object]	Examples of the media type. Each example object SHOULD match the media type and specified schema if present. The examples field is mutually exclusive of the example field. Furthermore, if referencing a schema which contains an example, the examples value SHALL override the example provided by the schema.
@@ -313,7 +331,8 @@ type MediaType struct {
 	Encoding map[string]Encoding     `yaml:"encoding,omitempty"`
 }
 
-/*Responses from OAS
+/*
+Responses from OAS
 default 			Response Object | Reference Object 	The documentation of responses other than the ones declared for specific HTTP response codes. Use this field to cover undeclared responses. A Reference Object can link to a response that the OpenAPI Object's components/responses section defines.
 Patterned Fields
 Field Pattern 	Type 	Description
@@ -321,7 +340,8 @@ HTTP Status Code 	Response Object | Reference Object 	Any HTTP status code can b
 */
 type Responses map[string]*ResponseOrRef
 
-/*Response from OAS
+/*
+Response from OAS
 description		string REQUIRED. 								A short description of the response. CommonMark syntax MAY be used for rich text representation.
 headers			Map[string, Header Object | Reference Object] 	Maps a header name to its definition. RFC7230 states header names are case insensitive. If a response header is defined with the name "Content-Type", it SHALL be ignored.
 content 		Map[string, Media Type Object]					A map containing descriptions of potential response payloads. The key is a media type or media type range and the value describes it. For responses that match multiple keys, only the most specific key is applicable. e.g. text/plain overrides text/*
@@ -336,7 +356,7 @@ type Response struct {
 
 type Callback map[string]PathItem
 
-//UnmarshalYAML Implements the Unmarshaler interface of the yaml pkg.
+// UnmarshalYAML Implements the Unmarshaler interface of the yaml pkg.
 func (e *CallbackOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	*e = CallbackOrRef{}
 	ref := Ref{}
@@ -381,7 +401,8 @@ type Header struct {
 	Content         map[string]MediaType `yaml:"content,omitempty"`
 }
 
-/*Link from OAS
+/*
+Link from OAS
 operationRef		string							A relative or absolute URI reference to an OAS operation. This field is mutually exclusive of the operationId field, and MUST point to an Operation Object. Relative operationRef values MAY be used to locate an existing Operation Object in the OpenAPI definition.
 operationId			string							The name of an existing, resolvable OAS operation, as defined with a unique operationId. This field is mutually exclusive of the operationRef field.
 parameters			Map[string, Any | {expression}]	A map representing parameters to pass to an operation as specified with operationId or identified via operationRef. The key is the parameter name to be used, whereas the value can be a constant or an expression to be evaluated and passed to the linked operation. The parameter name can be qualified using the parameter location [{in}.]{name} for operations that use the same parameter name in different locations (e.g. path.id).
@@ -399,7 +420,8 @@ type Link struct {
 	Server       Server                 `yaml:"server,omitempty"`
 }
 
-/*Schema from OAS
+/*
+Schema from OAS
 --Properties as is from JSON Schema
 title				string
 multipleOf			integer
@@ -439,7 +461,6 @@ xml				XML Object				This MAY be used only on properties schemas. It has no effe
 externalDocs	External Documentation Object	Additional external documentation for this schema.
 example			Any						A free-form property to include an example of an instance for this schema. To represent examples that cannot be naturally represented in JSON or YAML, a string value can be used to contain the example with escaping where necessary.
 deprecated		boolean					Specifies that a schema is deprecated and SHOULD be transitioned out of usage. Default value is false.
-
 */
 type Schema struct {
 	Type                 string                  `yaml:"type,omitempty"`
@@ -485,7 +506,8 @@ type AdditionalProperties struct {
 	Schema       *SchemaOrRef
 }
 
-/*Encoding from OAS
+/*
+Encoding from OAS
 contentType			string			The Content-Type for encoding a specific property. Default value depends on the property type: for string with format being binary – application/octet-stream; for other primitive types – text/plain; for object - application/json; for array – the default is defined based on the inner type. The value can be a specific media type (e.g. application/json), a wildcard media type (e.g. image/*), or a comma-separated list of the two types.
 headers				Map[string, Header Object | Reference Object]	A map allowing additional information to be provided as headers, for example Content-Disposition. Content-Type is described separately and SHALL be ignored in this section. This property SHALL be ignored if the request body media type is not a multipart.
 style				string				Describes how a specific property value will be serialized depending on its type. See Parameter Object for details on the style property. The behavior follows the same values as query parameters, including default values. This property SHALL be ignored if the request body media type is not application/x-www-form-urlencoded.
@@ -500,7 +522,8 @@ type Encoding struct {
 	AllowReserved bool                   `yaml:"allowReserved,omitempty"`
 }
 
-/*Example from OAS
+/*
+Example from OAS
 summary		string	Short description for the example.
 description	string	Long description for the example. CommonMark syntax MAY be used for rich text representation.
 value		Any		Embedded literal example. The value field and externalValue field are mutually exclusive. To represent examples of media types that cannot naturally represented in JSON or YAML, use a string value to contain the example, escaping where necessary.
@@ -517,7 +540,8 @@ type Example struct {
 type ExampleValue map[string]interface {
 }
 
-/*Discriminator from OAS
+/*
+Discriminator from OAS
 propertyName	string	REQUIRED. The name of the property in the payload that will hold the discriminator value.
 mapping	Map[string, string]	An object to hold mappings between payload values and schema names or references.
 */
@@ -526,7 +550,8 @@ type Discriminator struct {
 	Mapping      map[string]string `yaml:"mapping,omitempty"`
 }
 
-/*XML Object from OAS
+/*
+XML Object from OAS
 name	string	Replaces the name of the element/attribute used for the described schema property. When defined within items, it will affect the name of the individual XML elements within the list. When defined alongside type being array (outside the items), it will affect the wrapping element and only if wrapped is true. If wrapped is false, it will be ignored.
 namespace	string	The URI of the namespace definition. Value MUST be in the form of an absolute URI.
 prefix	string	The prefix to be used for the name.
@@ -633,9 +658,9 @@ func (e *ParameterOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error 
 		return nil
 	}
 
-	match, _ := regexp.MatchString("#/components/parameters/([a-z_0-9/]+)+", ref.Ref)
-    if !match {
-		fmt.Println("bad ref:",ref)
+	match, _ := regexp.MatchString("#/components/parameters/[A-Za-z_0-9/]+$", ref.Ref)
+	if !match {
+		fmt.Println("bad ref:", ref)
 		return fmt.Errorf("ref.Ref match not component reference")
 	}
 	e.Ref = &ref
@@ -688,7 +713,7 @@ func (s *SchemaOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		val := Schema{}
 		err = unmarshal(&val)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "error un marshalling SchemaOrRef")
+			fmt.Fprintln(os.Stderr, "error un marshalling SchemaOrRef", ref)
 			return err
 		}
 
@@ -742,7 +767,7 @@ func (e *AdditionalProperties) MarshalYAML() (interface{}, error) {
 	return e.Schema, nil
 }
 
-//UnMarshal : build OpenAPI struct form buffer
+// UnMarshal : build OpenAPI struct form buffer
 func (oa *OpenAPI) UnMarshal(buffer []byte) (*OpenAPI, error) {
 	err := yaml.Unmarshal(buffer, oa)
 	if err != nil {
@@ -752,7 +777,7 @@ func (oa *OpenAPI) UnMarshal(buffer []byte) (*OpenAPI, error) {
 	return oa, nil
 }
 
-//Load Charge le fichier de spec d'interface
+// Load Charge le fichier de spec d'interface
 func (oa *OpenAPI) Read(file io.Reader) error {
 	yamlFile, err := ioutil.ReadAll(file)
 	if err != nil {
@@ -767,7 +792,7 @@ func (oa *OpenAPI) Read(file io.Reader) error {
 	return nil
 }
 
-//Load Charge le fichier de spec d'interface
+// Load Charge le fichier de spec d'interface
 func (oa *OpenAPI) Load(filename string) error {
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -782,7 +807,7 @@ func (oa *OpenAPI) Load(filename string) error {
 	return nil
 }
 
-//Save dump la spec courante
+// Save dump la spec courante
 func (oa *OpenAPI) Save() {
 	buf, err := yaml.Marshal(oa)
 	if err != nil {
@@ -869,7 +894,9 @@ func (s *SchemaOrRef) resolveRefs(refIndex map[string]refIndexElement) {
 		}
 	}
 	if s.Val.AdditionalProperties != nil {
-		s.Val.AdditionalProperties.Schema.resolveRefs(refIndex)
+		if s.Val.AdditionalProperties.Schema != nil {
+			s.Val.AdditionalProperties.Schema.resolveRefs(refIndex)
+		}
 	}
 }
 func (s *SchemaOrRef) Schema() *Schema {
@@ -892,8 +919,8 @@ func (oa *OpenAPI) ResolveRefsWithFilter(filter []string) map[string]*SchemaOrRe
 	// create filtrered map
 	filteredComponents := make(map[string]*SchemaOrRef)
 	for _, name := range filter {
-		if s, ok := oa.Components.Schemas[name] ; ok {
-			if _, already := filteredComponents[name] ; !already {
+		if s, ok := oa.Components.Schemas[name]; ok {
+			if _, already := filteredComponents[name]; !already {
 				filteredComponents[name] = s
 				s.filterRefs(&filteredComponents)
 			}

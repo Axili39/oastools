@@ -45,6 +45,7 @@ func genProto(file string, protofilename string, component string) {
 	defer w.Close()
 
 	oa := oasmodel.OpenAPI{}
+	genOpts := protobuf.GenerationOptions{AddEnumPrefix: false}
 	err = oa.Load(file)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error loading %s : %v", file, err)
@@ -58,7 +59,7 @@ func genProto(file string, protofilename string, component string) {
 		os.Exit(1)
 	}
 
-	err = protobuf.Components2Proto(&oa, w, "foo.bar", nil, "go_package=\".;main\"")
+	err = protobuf.Components2Proto(&oa, w, "foo.bar", genOpts, nil, "go_package=\".;main\"")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error parsing %s : %v", file, err)
 		os.Exit(1)

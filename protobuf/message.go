@@ -27,7 +27,7 @@ type MessageMembers struct {
 	comment string
 }
 
-//Declare : Message Member declaration
+// Declare : Message Member declaration
 func (t *MessageMembers) Declare(w io.Writer, indent string) {
 	fmt.Fprintf(w, "%s", indent)
 	// repeated
@@ -37,16 +37,16 @@ func (t *MessageMembers) Declare(w io.Writer, indent string) {
 	// field decl
 	fmt.Fprintf(w, "%s %s = %d;", normalizeName(t.typedecl.Name()), normalizeName(t.name), t.number)
 	// TODO : options
-	fmt.Fprintf(w, " // %s", t.comment)
+	fmt.Fprintf(w, " /* %s */", t.comment)
 	fmt.Fprintf(w, "\n")
 }
 
-//Name : Member Name
+// Name : Member Name
 func (t *MessageMembers) Name() string {
 	return t.name
 }
 
-//Message structure
+// Message structure
 type Message struct {
 	name    string
 	nested  []ProtoType      // Nested definitions
@@ -54,9 +54,9 @@ type Message struct {
 	comment string
 }
 
-//Declare : ProtoType interface realization
+// Declare : ProtoType interface realization
 func (t *Message) Declare(w io.Writer, indent string) {
-	fmt.Fprintf(w, "%s// Type : %s\n", indent, t.comment)
+	fmt.Fprintf(w, "%s/* Type : %s */\n", indent, t.comment)
 	fmt.Fprintf(w, "%smessage %s {\n", indent, normalizeName(t.name))
 	// nested
 	for n := range t.nested {
@@ -69,7 +69,7 @@ func (t *Message) Declare(w io.Writer, indent string) {
 	fmt.Fprintf(w, "%s}\n", indent)
 }
 
-//Name :  ProtoType interface realization
+// Name :  ProtoType interface realization
 func (t *Message) Name() string {
 	return t.name
 }
@@ -78,7 +78,7 @@ func isRepeated(schema *oasmodel.SchemaOrRef) bool {
 	return schema.Schema().Type == "array"
 }
 
-func createMessage(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
+func createMessage(name string, schema *oasmodel.Schema, parent *Message, genOpts GenerationOptions) (ProtoType, error) {
 	var err error
 
 	node := Message{name, nil, nil, schema.Description}
@@ -100,7 +100,7 @@ func createMessage(name string, schema *oasmodel.Schema, parent *Message) (Proto
 			os.Exit(1)
 		}
 		f := MessageMembers{nil, m, num, isRepeated(prop), prop.Description()}
-		f.typedecl, err = CreateType(name+"_"+m, prop, &node)
+		f.typedecl, err = CreateType(name+"_"+m, prop, &node, genOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -113,18 +113,18 @@ func createMessage(name string, schema *oasmodel.Schema, parent *Message) (Proto
 	return &node, nil
 }
 
-func createMessageArray(name string, schema *oasmodel.Schema) (ProtoType, error) {
+func createMessageArray(name string, schema *oasmodel.Schema, genOpts GenerationOptions) (ProtoType, error) {
 	var err error
 
 	node := Message{name + "Array", nil, nil, schema.Description}
-	
+
 	f := MessageMembers{nil, "Items", 1, true, schema.Items.Description()}
-	f.typedecl, err = CreateType(name, schema.Items, &node)
+	f.typedecl, err = CreateType(name, schema.Items, &node, genOpts)
 	if err != nil {
 		return nil, err
 	}
 	node.body = append(node.body, f)
-	
+
 	return &node, nil
 }
 
@@ -134,7 +134,7 @@ type Oneof struct {
 	members []MessageMembers
 }
 
-//Declare : ProtoType interface realization
+// Declare : ProtoType interface realization
 func (t *Oneof) Declare(w io.Writer, indent string) {
 	fmt.Fprintf(w, "%smessage %s {\n", indent, normalizeName(t.name))
 	fmt.Fprintf(w, "%s\toneof select {\n", indent)
@@ -145,17 +145,17 @@ func (t *Oneof) Declare(w io.Writer, indent string) {
 	fmt.Fprintf(w, "\t%s}\n%s}\n", indent, indent)
 }
 
-//Name :  ProtoType interface realization
+// Name :  ProtoType interface realization
 func (t *Oneof) Name() string {
 	return t.name
 }
 
-func createOneOf(name string, oneof []*oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
+func createOneOf(name string, oneof []*oasmodel.SchemaOrRef, parent *Message, genOpts GenerationOptions) (ProtoType, error) {
 	node := Oneof{name, nil}
 	num := 0
 	for _, prop := range oneof {
 		num++
-		t, err := CreateType("YYY", prop, parent)
+		t, err := CreateType("YYY", prop, parent, genOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -165,7 +165,7 @@ func createOneOf(name string, oneof []*oasmodel.SchemaOrRef, parent *Message) (P
 	return &node, nil
 }
 
-func createAllOf(name string, allOf []*oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
+func createAllOf(name string, allOf []*oasmodel.SchemaOrRef, parent *Message, genOpts GenerationOptions) (ProtoType, error) {
 	node := Message{name, nil, nil, ""}
 	num := 0
 
@@ -182,7 +182,7 @@ func createAllOf(name string, allOf []*oasmodel.SchemaOrRef, parent *Message) (P
 			num++
 			prop := current.Properties[m]
 			f := MessageMembers{nil, m, num, isRepeated(prop), prop.Description()}
-			t, err := CreateType(name+"_"+m, prop, &node)
+			t, err := CreateType(name+"_"+m, prop, &node, genOpts)
 			if err != nil {
 				return nil, err
 			}

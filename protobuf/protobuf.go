@@ -5,27 +5,33 @@ import (
 	"io"
 	"sort"
 	"strings"
+
 	"github.com/Axili39/oastools/oasmodel"
 )
 
-//ProtoType Field Type protocol buffer interface
+// ProtoType Field Type protocol buffer interface
 type ProtoType interface {
 	Declare(w io.Writer, indent string)
 	Name() string
 }
 
-//Map object, used to represents AdditionalProperties
+// Map object, used to represents AdditionalProperties
 type Map struct {
 	name  string
 	key   string
 	value ProtoType
 }
 
-//Declare : ProtoType interface realization
+// Generation Options
+type GenerationOptions struct {
+	AddEnumPrefix bool
+}
+
+// Declare : ProtoType interface realization
 func (t *Map) Declare(w io.Writer, indent string) {
 }
 
-//Name :  ProtoType interface realization
+// Name :  ProtoType interface realization
 func (t *Map) Name() string {
 	return "map<" + t.key + ", " + t.value.Name() + ">"
 }
@@ -34,12 +40,16 @@ func normalizeName(name string) string {
 	return strings.Replace(name, "-", "_", -1)
 }
 
-func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Message) (ProtoType, error) {
+func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Message, genOpts GenerationOptions) (ProtoType, error) {
 	if schema.Type != "object" {
 		return nil, fmt.Errorf("Schema %s with Additional Properties must be an object", name)
 	}
 
-	objType, err := CreateType(name+"Elem", schema.AdditionalProperties.Schema, parent)
+	if schema.AdditionalProperties.Schema == nil {
+		return nil, fmt.Errorf("Schema %s with Additional Properties : Unsupported AdditionalProperties with boolean value for protobuf generation, Schema MUST be provided", name)
+	}
+
+	objType, err := CreateType(name+"Elem", schema.AdditionalProperties.Schema, parent, genOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +57,8 @@ func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Me
 
 }
 
-//CreateType : convert OAS Schema to internal ProtoType
-func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message) (ProtoType, error) {
+// CreateType : convert OAS Schema to internal ProtoType
+func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message, genOpts GenerationOptions) (ProtoType, error) {
 	schema := schemaOrRef.Schema()
 	// In case of Ref, we need to get the corresponding type name
 	if schemaOrRef.Ref != nil {
@@ -59,30 +69,30 @@ func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message)
 	}
 	// case Oneof
 	if schema.OneOf != nil {
-		return createOneOf(name, schema.OneOf, parent)
+		return createOneOf(name, schema.OneOf, parent, genOpts)
 	}
 	// case AllOf
 	if schema.AllOf != nil {
-		return createAllOf(name, schema.AllOf, parent)
+		return createAllOf(name, schema.AllOf, parent, genOpts)
 	}
 	// Case AdditionalProperties
 	if schema.AdditionalProperties != nil {
-		return createAdditionalProperties(name, schema, parent)
+		return createAdditionalProperties(name, schema, parent, genOpts)
 	}
 	// case Object
 	if schema.Type == "object" {
-		return createMessage(name, schema, parent)
+		return createMessage(name, schema, parent, genOpts)
 	}
 	// case Array
 	if schema.Type == "array" {
-		if (parent == nil) {
-			return createMessageArray(name, schema)
+		if parent == nil {
+			return createMessageArray(name, schema, genOpts)
 		}
-		return CreateType(name, schema.Items, parent)
+		return CreateType(name, schema.Items, parent, genOpts)
 	}
 	// Enums
 	if schema.Type == "string" && len(schema.Enum) > 0 {
-		return createEnum(name, schema, parent)
+		return createEnum(name, schema, parent, genOpts)
 	}
 
 	return createTypename(schema.Type, schema.Format)
@@ -99,22 +109,22 @@ func keysorder(m map[string]*oasmodel.SchemaOrRef) []string {
 	return keys
 }
 
-//Components2Proto : generate proto file from Parsed OpenAPI definition
-func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, filternodes []string, options ...string) error {
+// Components2Proto : generate proto file from Parsed OpenAPI definition
+func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, genOpts GenerationOptions, filternodes []string, options ...string) error {
 	var items []string
 	if filternodes == nil {
-		oa.ResolveRefs()	
+		oa.ResolveRefs()
 		items = keysorder(oa.Components.Schemas)
 	} else {
-		items = keysorder(oa.ResolveRefsWithFilter(filternodes))	
+		items = keysorder(oa.ResolveRefsWithFilter(filternodes))
 	}
 	nodeList := make([]ProtoType, 0, 10)
 	// create first level Nodes
 	for _, k := range items {
 		v := oa.Components.Schemas[k]
-		node, err := CreateType(k, v, nil)
+		node, err := CreateType(k, v, nil, genOpts)
 		if err != nil {
-			// silentely ignore it
+			fmt.Println("error : ", err)
 			continue
 		}
 		nodeList = append(nodeList, node)
