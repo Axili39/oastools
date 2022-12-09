@@ -1,0 +1,21 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Lux API
+  license:
+    name: MIT
+  x-package: root
+servers:
+  - url: http://github.com/Axili39/lux
+paths:
+components:
+  schemas:
+    foo:
+      type: object
+      properties:
+        member1:
+          description: Simple string
+          type: string
+        member2:
+          description: External object in child.yaml
+          $ref: "child.yaml#/components/schemas/bar"

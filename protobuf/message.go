@@ -75,6 +75,9 @@ func (t *Message) Name() string {
 }
 
 func isRepeated(schema *oasmodel.SchemaOrRef) bool {
+	if schema.Schema() == nil {
+		return false
+	}
 	return schema.Schema().Type == "array"
 }
 
@@ -93,15 +96,21 @@ func createMessage(name string, schema *oasmodel.Schema, parent *Message, genOpt
 
 	// Add each Properties as message Member
 	for _, m := range keys {
+		fmt.Println("property name : ", m)
 		num++
 		prop := schema.Properties[m]
 		if prop == nil {
 			fmt.Println("bad property name : ", m)
 			os.Exit(1)
 		}
+		fmt.Println("property name s2: ", m, prop)
 		f := MessageMembers{nil, m, num, isRepeated(prop), prop.Description()}
+		fmt.Println("property name s3: ", m)
 		f.typedecl, err = CreateType(name+"_"+m, prop, &node, genOpts)
+
 		if err != nil {
+			fmt.Println("property name s4: ", m)
+
 			return nil, err
 		}
 		node.body = append(node.body, f)
@@ -110,6 +119,7 @@ func createMessage(name string, schema *oasmodel.Schema, parent *Message, genOpt
 	if parent != nil {
 		parent.nested = append(parent.nested, &node)
 	}
+	fmt.Println("finished")
 	return &node, nil
 }
 

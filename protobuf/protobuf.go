@@ -25,6 +25,8 @@ type Map struct {
 // Generation Options
 type GenerationOptions struct {
 	AddEnumPrefix bool
+	PackageNames  map[string]string
+	Imports       map[string]bool
 }
 
 // Declare : ProtoType interface realization
@@ -59,9 +61,28 @@ func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Me
 
 // CreateType : convert OAS Schema to internal ProtoType
 func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message, genOpts GenerationOptions) (ProtoType, error) {
+	fmt.Println(name, schemaOrRef)
 	schema := schemaOrRef.Schema()
 	// In case of Ref, we need to get the corresponding type name
 	if schemaOrRef.Ref != nil {
+		if schemaOrRef.Ref.External != "" {
+			fmt.Println("external", schemaOrRef.Ref.External)
+			packageName := schemaOrRef.Ref.External
+
+			// rename package
+			if v, ok := genOpts.PackageNames[packageName]; ok {
+				// change package name
+				packageName = v
+			}
+
+			// store package in imports
+			genOpts.Imports[schemaOrRef.Ref.External] = true
+
+			return createTypename(packageName+"."+schemaOrRef.Ref.RefName, "")
+		}
+		if schema == nil {
+			return nil, fmt.Errorf("bad ref")
+		}
 		if schema.AllOf != nil || schema.Type == "object" && schema.AdditionalProperties == nil || (schema.Type == "string" && len(schema.Enum) > 0) {
 			// in case of Ref, reference type name only for messages :
 			return createTypename(schemaOrRef.Ref.RefName, "")
@@ -136,6 +157,9 @@ func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, gen
 	}
 	for _, opt := range options {
 		fmt.Fprintln(f, "option ", opt, ";")
+	}
+	for packageFile, _ := range genOpts.Imports {
+		fmt.Fprintf(f, "import \"%s.proto\";\n", packageFile)
 	}
 	for n := range nodeList {
 		nodeList[n].Declare(f, "")

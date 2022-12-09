@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 
 	"github.com/Axili39/oastools/oasmodel"
 	"github.com/Axili39/oastools/protobuf"
@@ -51,9 +52,11 @@ func main() {
 	flag.Var(&options, "option", "add directive option in .proto file (multi)")
 	var filteredNodes stringList
 	flag.Var(&filteredNodes, "node", "select component (multi)")
+	var packageNameMap stringList
+	flag.Var(&packageNameMap, "rename-package", "rename package imports")
 	flag.Parse()
 
-	genOpts := protobuf.GenerationOptions{AddEnumPrefix: *AddEnumPrefix}
+	genOpts := protobuf.GenerationOptions{AddEnumPrefix: *AddEnumPrefix, Imports: make(map[string]bool), PackageNames: map[string]string{}}
 
 	if *showversion {
 		if info, available := debug.ReadBuildInfo(); available {
@@ -92,8 +95,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	// load package Map
+	for _, p := range packageNameMap {
+		pair := strings.Split(p, ":")
+		if len(pair) != 2 {
+			fmt.Fprintf(os.Stderr, "error bad package rename :", p)
+		}
+		genOpts.PackageNames[pair[0]] = pair[1]
+	}
+
 	err = protobuf.Components2Proto(&oa, output, *packageName, genOpts, filteredNodes, options...)
 	if err != nil {
+		fmt.Println("error")
 		fmt.Fprintf(os.Stderr, "error parsing %s : %v", *file, err)
 		os.Exit(1)
 	}

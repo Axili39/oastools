@@ -93,6 +93,7 @@ type Info struct {
 	Contact        *Contact `yaml:"contact,omitempty"`
 	License        *License `yaml:"license,omitempty"`
 	Version        string   `yaml:"version"`
+	XPackage       string   `yaml:"x-package"`
 }
 
 /*
@@ -570,7 +571,8 @@ type Ref struct {
 	Ref         string      `yaml:"$ref,omitempty"`
 	Description string      `yaml:"description,omitempty"`
 	Resolved    interface{} `yaml:"-"`
-	RefName     string
+	RefName     string      `yaml:"-"`
+	External    string      `yaml:"-"`
 }
 type CallbackOrRef struct {
 	Ref *Ref
@@ -721,6 +723,19 @@ func (s *SchemaOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return nil
 	}
 	s.Ref = &ref
+	re := regexp.MustCompile("([a-zA-Z0-9_]+).yaml#/components/([a-zA-Z0-9_]+)/([a-zA-Z0-9]+)")
+	if re == nil {
+		return nil
+	}
+
+	fmt.Println("match re vs", s.Ref.Ref)
+	result := re.FindStringSubmatch(s.Ref.Ref)
+	fmt.Println(result)
+	if len(result) > 0 {
+		s.Ref.RefName = result[3]
+		s.Ref.External = result[1]
+	}
+
 	return nil
 }
 
@@ -861,6 +876,7 @@ func (s *SchemaOrRef) resolveRefs(refIndex map[string]refIndexElement) {
 			s.Ref.Resolved = elem.schema
 			s.Ref.RefName = elem.name
 		} else {
+			fmt.Printf("Can't Resolve %s\n", s.Ref.Ref)
 			log.Printf("Can't Resolve %s\n", s.Ref.Ref)
 		}
 		return
@@ -869,6 +885,7 @@ func (s *SchemaOrRef) resolveRefs(refIndex map[string]refIndexElement) {
 	if s.Val.Properties != nil {
 		for p, v := range s.Val.Properties {
 			log.Printf("visit %s ...\n", p)
+			fmt.Println("resolving", p, v)
 			v.resolveRefs(refIndex)
 		}
 	}
@@ -906,7 +923,7 @@ func (s *SchemaOrRef) Schema() *Schema {
 	if s.Val != nil {
 		return s.Val
 	}
-	log.Fatalf("unable to convert %s into valid schema", s.Ref.Ref)
+	//log.Fatalf("unable to convert %s into valid schema", s.Ref.Ref)
 	return nil
 }
 
