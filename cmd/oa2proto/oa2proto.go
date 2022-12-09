@@ -45,6 +45,7 @@ func main() {
 	build := flag.String("build", "", "build with protoc")
 	file := flag.String("f", "", "yaml file to parse")
 	out := flag.String("o", "", "output file")
+	verbose := flag.Bool("verbose", false, "show log")
 	AddEnumPrefix := flag.Bool("add-enum-prefix", false, "Auto add prefix on Enums")
 	packageName := flag.String("p", "", "package name eg: foo.bar")
 	showversion := flag.Bool("v", false, "show version")
@@ -67,8 +68,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	log.SetFlags(0)
-	log.SetOutput(ioutil.Discard)
+	if !*verbose {
+		log.SetFlags(0)
+		log.SetOutput(ioutil.Discard)
+	}
+
 	var output *os.File
 	if *out != "" {
 		var err error
@@ -106,7 +110,6 @@ func main() {
 
 	err = protobuf.Components2Proto(&oa, output, *packageName, genOpts, filteredNodes, options...)
 	if err != nil {
-		fmt.Println("error")
 		fmt.Fprintf(os.Stderr, "error parsing %s : %v", *file, err)
 		os.Exit(1)
 	}

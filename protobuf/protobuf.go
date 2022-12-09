@@ -3,6 +3,7 @@ package protobuf
 import (
 	"fmt"
 	"io"
+	"log"
 	"sort"
 	"strings"
 
@@ -61,12 +62,10 @@ func createAdditionalProperties(name string, schema *oasmodel.Schema, parent *Me
 
 // CreateType : convert OAS Schema to internal ProtoType
 func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message, genOpts GenerationOptions) (ProtoType, error) {
-	fmt.Println(name, schemaOrRef)
 	schema := schemaOrRef.Schema()
 	// In case of Ref, we need to get the corresponding type name
 	if schemaOrRef.Ref != nil {
 		if schemaOrRef.Ref.External != "" {
-			fmt.Println("external", schemaOrRef.Ref.External)
 			packageName := schemaOrRef.Ref.External
 
 			// rename package
@@ -83,7 +82,7 @@ func CreateType(name string, schemaOrRef *oasmodel.SchemaOrRef, parent *Message,
 		if schema == nil {
 			return nil, fmt.Errorf("bad ref")
 		}
-		if schema.AllOf != nil || schema.Type == "object" && schema.AdditionalProperties == nil || (schema.Type == "string" && len(schema.Enum) > 0) {
+		if schema.OneOf != nil || schema.AllOf != nil || schema.Type == "object" && schema.AdditionalProperties == nil || (schema.Type == "string" && len(schema.Enum) > 0) {
 			// in case of Ref, reference type name only for messages :
 			return createTypename(schemaOrRef.Ref.RefName, "")
 		}
@@ -145,7 +144,7 @@ func Components2Proto(oa *oasmodel.OpenAPI, f io.Writer, packageName string, gen
 		v := oa.Components.Schemas[k]
 		node, err := CreateType(k, v, nil, genOpts)
 		if err != nil {
-			fmt.Println("error : ", err)
+			log.Println("error : ", err)
 			continue
 		}
 		nodeList = append(nodeList, node)

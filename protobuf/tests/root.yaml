@@ -10,12 +10,27 @@ servers:
 paths:
 components:
   schemas:
+    bar:
+      type: object
+      properties:
+        prop1:
+          type: string
+    bar1:
+      oneOf:
+        - $ref: "#/components/schemas/compo1"
+        - $ref: "child.yaml#/components/schemas/bar"
+    compo1:
+      type: string
+    compo2: 
+      type: integer
     foo:
       type: object
       properties:
-        member1:
+        member-1:
           description: Simple string
           type: string
-        member2:
+        member_2:
           description: External object in child.yaml
           $ref: "child.yaml#/components/schemas/bar"
+        member_3:
+          $ref: "#/components/schemas/bar1"

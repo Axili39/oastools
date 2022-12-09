@@ -660,9 +660,8 @@ func (e *ParameterOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error 
 		return nil
 	}
 
-	match, _ := regexp.MatchString("#/components/parameters/[A-Za-z_0-9/]+$", ref.Ref)
+	match, _ := regexp.MatchString("#/components/parameters/[A-Za-z_0-9/\\-]+$", ref.Ref)
 	if !match {
-		fmt.Println("bad ref:", ref)
 		return fmt.Errorf("ref.Ref match not component reference")
 	}
 	e.Ref = &ref
@@ -723,14 +722,12 @@ func (s *SchemaOrRef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return nil
 	}
 	s.Ref = &ref
-	re := regexp.MustCompile("([a-zA-Z0-9_]+).yaml#/components/([a-zA-Z0-9_]+)/([a-zA-Z0-9]+)")
+	re := regexp.MustCompile(`([a-zA-Z0-9_\-.]+).yaml#/components/([a-zA-Z0-9_]+)/([a-zA-Z0-9]+)`)
 	if re == nil {
 		return nil
 	}
 
-	fmt.Println("match re vs", s.Ref.Ref)
 	result := re.FindStringSubmatch(s.Ref.Ref)
-	fmt.Println(result)
 	if len(result) > 0 {
 		s.Ref.RefName = result[3]
 		s.Ref.External = result[1]
@@ -876,7 +873,6 @@ func (s *SchemaOrRef) resolveRefs(refIndex map[string]refIndexElement) {
 			s.Ref.Resolved = elem.schema
 			s.Ref.RefName = elem.name
 		} else {
-			fmt.Printf("Can't Resolve %s\n", s.Ref.Ref)
 			log.Printf("Can't Resolve %s\n", s.Ref.Ref)
 		}
 		return
@@ -885,7 +881,6 @@ func (s *SchemaOrRef) resolveRefs(refIndex map[string]refIndexElement) {
 	if s.Val.Properties != nil {
 		for p, v := range s.Val.Properties {
 			log.Printf("visit %s ...\n", p)
-			fmt.Println("resolving", p, v)
 			v.resolveRefs(refIndex)
 		}
 	}
@@ -948,6 +943,13 @@ func (oa *OpenAPI) ResolveRefsWithFilter(filter []string) map[string]*SchemaOrRe
 
 func (s *SchemaOrRef) filterRefs(filteredComponents *map[string]*SchemaOrRef) {
 	if s.Ref != nil {
+		if s.Ref.External != "" {
+			// no following references needed (external case)
+			return
+		}
+		if s.Ref.Resolved == nil {
+			log.Fatalf("unresolved reference:", s.Ref.Ref)
+		}
 		log.Printf("filtering : %s added", s.Ref.RefName)
 		(*filteredComponents)[s.Ref.RefName] = s
 		s.Ref.Resolved.(*SchemaOrRef).filterRefs(filteredComponents)
