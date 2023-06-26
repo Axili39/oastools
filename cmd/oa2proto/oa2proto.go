@@ -47,6 +47,7 @@ func main() {
 	out := flag.String("o", "", "output file")
 	verbose := flag.Bool("verbose", false, "show log")
 	AddEnumPrefix := flag.Bool("add-enum-prefix", false, "Auto add prefix on Enums")
+	NoMsgPrefix := flag.Bool("no-msg-prefix", false, "Do not add Prefix to nested message type")
 	packageName := flag.String("p", "", "package name eg: foo.bar")
 	showversion := flag.Bool("v", false, "show version")
 	var options stringList
@@ -57,7 +58,7 @@ func main() {
 	flag.Var(&packageNameMap, "rename-package", "rename package imports")
 	flag.Parse()
 
-	genOpts := protobuf.GenerationOptions{AddEnumPrefix: *AddEnumPrefix, Imports: make(map[string]bool), PackageNames: map[string]string{}}
+	genOpts := protobuf.GenerationOptions{AddEnumPrefix: *AddEnumPrefix, Imports: make(map[string]bool), PackageNames: map[string]string{}, AddMsgPrefix: !(*NoMsgPrefix)}
 
 	if *showversion {
 		if info, available := debug.ReadBuildInfo(); available {

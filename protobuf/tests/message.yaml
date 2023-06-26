@@ -9,13 +9,28 @@ servers:
 paths:
 components:
   schemas:
-    foo:
+    lol:
+      type: object
+      properties:
+        foo:
+          type: object
+          properties:
+            member1:
+              type: string
+            member2:
+              description: |
+                ligne 1
+                ligne 2
+              type: integer
+    bar:
       type: object
       properties:
         member1:
           type: string
-        member2:
-          description: |
-            ligne 1
-            ligne 2
-          type: integer
+        foo:
+          type: object
+          properties:
+            bar:
+              type: string
+            foo:
+              type: integer

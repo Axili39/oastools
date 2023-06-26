@@ -26,6 +26,7 @@ type Map struct {
 // Generation Options
 type GenerationOptions struct {
 	AddEnumPrefix bool
+	AddMsgPrefix  bool
 	PackageNames  map[string]string
 	Imports       map[string]bool
 }

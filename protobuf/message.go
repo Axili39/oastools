@@ -104,8 +104,11 @@ func createMessage(name string, schema *oasmodel.Schema, parent *Message, genOpt
 			os.Exit(1)
 		}
 		f := MessageMembers{nil, m, num, isRepeated(prop), prop.Description()}
-
-		f.typedecl, err = CreateType(name+"_"+m, prop, &node, genOpts)
+		if genOpts.AddMsgPrefix {
+			f.typedecl, err = CreateType(name+"_"+m, prop, &node, genOpts)
+		} else {
+			f.typedecl, err = CreateType(m+"_", prop, &node, genOpts)
+		}
 
 		if err != nil {
 			return nil, err
